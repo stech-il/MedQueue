@@ -1,6 +1,6 @@
 @echo off
 REM MedQueue — קיוסק עם הדפסה שקטה (ללא חלון הדפסה) ב-Chrome
-set URL=http://localhost:5173/kiosk
+set URL=http://localhost:5173/kiosk?kiosk=1
 set CHROME=%ProgramFiles%\Google\Chrome\Application\chrome.exe
 if not exist "%CHROME%" set CHROME=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe
 if not exist "%CHROME%" (
@@ -8,4 +8,4 @@ if not exist "%CHROME%" (
   pause
   exit /b 1
 )
-start "" "%CHROME%" --kiosk --kiosk-printing --disable-print-preview %URL%
+call "%~dp0launch-kiosk-chrome.bat" "%URL%"

@@ -9,6 +9,7 @@ import OnScreenKeyboard from '../components/OnScreenKeyboard';
 import KioskHealthFundPicker from '../components/KioskHealthFundPicker';
 
 import { validatePhoneDigits, validateIdDigits } from '../lib/israeliValidators';
+import { isKioskSilentPrintUrl } from '../lib/kioskPrintMode';
 
 
 
@@ -71,6 +72,7 @@ export default function Kiosk() {
   const [error, setError] = useState('');
 
   const [printNote, setPrintNote] = useState('');
+  const [printSetupHint, setPrintSetupHint] = useState(() => !isKioskSilentPrintUrl());
 
   const submittingRef = useRef(false);
 
@@ -304,7 +306,16 @@ export default function Kiosk() {
 
       </header>
 
-
+      {printSetupHint && (
+        <div className="kiosk-page__print-setup" role="alert">
+          <strong>הדפסה אוטומטית לא מוגדרת</strong>
+          <p>סגרו את Chrome ופתחו רק את הקיצור «MedQueue קיוסק» בשולחן העבודה, או הריצו:</p>
+          <p dir="ltr" className="kiosk-page__print-setup-cmd">
+            scripts\start-kiosk-render.bat
+          </p>
+          <p>אל תגלשו לקיוסק מהסמל הרגיל של Chrome.</p>
+        </div>
+      )}
 
       <main className="kiosk-page__main">
 
@@ -497,13 +508,10 @@ export default function Kiosk() {
 
 
       <TicketPrint
-
         ticket={step === 'done' && ticket && !ticket.printed ? ticket : null}
-
         settings={settings}
-
         receptionRoom={receptionRoom}
-
+        onPrintBlocked={() => setPrintSetupHint(true)}
       />
 
 

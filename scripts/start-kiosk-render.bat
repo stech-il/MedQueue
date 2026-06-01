@@ -1,22 +1,48 @@
 @echo off
-REM קיוסק מלא ל-Render: סוכן הדפסה + Chrome קיוסק (הדפסה שקטה)
-REM שימוש: start-kiosk-render.bat https://your-app.onrender.com
-set BASE=%~1
+chcp 65001 >nul
+title MedQueue קיוסק
+set "BASE=%~1"
 if "%BASE%"=="" (
-  echo שימוש: start-kiosk-render.bat https://YOUR-APP.onrender.com
+  echo.
+  echo  שימוש:
+  echo    start-kiosk-render.bat https://medqueue-6ivj.onrender.com
+  echo.
+  echo  או הרץ פעם אחת: install-kiosk-windows.bat
   pause
   exit /b 1
 )
-set MEDQUEUE_URL=%BASE%
-set KIOSK_URL=%BASE%/kiosk
-cd /d "%~dp0.."
-start "MedQueue Print" cmd /c "npm run kiosk:agent"
-timeout /t 2 /nobreak >nul
-set CHROME=%ProgramFiles%\Google\Chrome\Application\chrome.exe
-if not exist "%CHROME%" set CHROME=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe
-if not exist "%CHROME%" (
-  echo Chrome not found.
+
+set "ROOT=%~dp0.."
+cd /d "%ROOT%"
+
+where node >nul 2>&1
+if errorlevel 1 (
+  echo Node.js לא מותקן — הרץ install-kiosk-windows.bat
   pause
   exit /b 1
 )
-start "" "%CHROME%" --kiosk --kiosk-printing --disable-print-preview "%KIOSK_URL%"
+
+if not exist "%ROOT%\server\node_modules\pdf-to-printer" (
+  echo מתקין סוכן הדפסה...
+  call npm install --prefix server
+)
+
+set "MEDQUEUE_URL=%BASE%"
+set "KIOSK_URL=%BASE%/kiosk?kiosk=1"
+
+echo.
+echo  מפעיל סוכן הדפסה ^(חלון שחור — אל תסגור^)...
+start "MedQueue הדפסה" cmd /k "cd /d \"%ROOT%\" && set MEDQUEUE_URL=%MEDQUEUE_URL% && npm run kiosk:agent"
+
+echo  ממתין לחיבור סוכן...
+timeout /t 4 /nobreak >nul
+
+echo  פותח Chrome לקיוסק...
+call "%~dp0launch-kiosk-chrome.bat" "%KIOSK_URL%"
+
+echo.
+echo  אם עדיין מופיע חלון הדפסה:
+echo    1. סגר את כל Chrome ופתח רק מהקיצור MedQueue קיוסק
+echo    2. ודא שבחלון ההדפסה כתוב: מחובר
+echo    3. הגדר מדפסת ברירת מחדל ב-Windows
+echo.
