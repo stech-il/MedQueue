@@ -17,15 +17,15 @@ export default function Dashboard() {
     <div>
       <div style={topRow}>
         <h1 style={h1}>לוח בקרה</h1>
-        <Link to="/manage/reports" style={reportsLink}>
+        <Link to="/manage/reports" className="manage-link" style={reportsLink}>
           דוחות מלאים וסטטיסטיקה →
         </Link>
       </div>
       <div style={grid}>
         <Stat label="תורים היום" value={stats.total} />
-        <Stat label="ממתינים" value={stats.waiting} color="#fbbf24" />
-        <Stat label="בטיפול/נקראו" value={stats.serving} color="#38bdf8" />
-        <Stat label="הושלמו" value={stats.completed} color="#34d399" />
+        <Stat label="ממתינים" value={stats.waiting} color="#e67700" />
+        <Stat label="בטיפול/נקראו" value={stats.serving} color="#4c6ef5" />
+        <Stat label="הושלמו" value={stats.completed} color="#2f9e44" />
       </div>
       <h2 style={h2}>מצב חדרים</h2>
       <div style={roomGrid}>
@@ -67,7 +67,7 @@ const topRow = {
   marginBottom: '1.25rem',
 };
 const h1 = { fontSize: '1.75rem', margin: 0 };
-const reportsLink = { color: '#38bdf8', fontWeight: 600, textDecoration: 'none' };
+const reportsLink = { textDecoration: 'none' };
 const h2 = { fontSize: '1.2rem', margin: '1.5rem 0 0.75rem' };
 const grid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' };
 const statCard = { textAlign: 'center', padding: '1.25rem' };

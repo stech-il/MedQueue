@@ -1,18 +1,22 @@
-/* ——— ניהול: מצב יום (ברירת מחדל) / מצב לילה ——— */
+/* ——— ניהול: מצב יום (CMS עדין) / מצב לילה ——— */
 
 .manage-app {
   display: flex;
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
+  -webkit-font-smoothing: antialiased;
 }
 
 .manage-app[data-manage-theme='dark'] {
   --bg: #0f172a;
   --surface: #1e293b;
   --surface2: #334155;
+  --surface-hover: #273548;
+  --border: #334155;
   --text: #f1f5f9;
   --muted: #94a3b8;
+  --primary: #3b82f6;
   --manage-sidebar-bg: #1e293b;
   --manage-sidebar-border: #334155;
   --manage-nav-color: #cbd5e1;
@@ -28,25 +32,47 @@
   --manage-theme-toggle-color: #cbd5e1;
 }
 
+/* פלטת CMS — רכה, ברורה, ניגודיות נעימה */
 .manage-app[data-manage-theme='light'] {
-  --bg: #f1f5f9;
+  --bg: #f0f2f5;
   --surface: #ffffff;
-  --surface2: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --manage-sidebar-bg: #ffffff;
-  --manage-sidebar-border: #e2e8f0;
-  --manage-nav-color: #475569;
-  --manage-nav-active-bg: #e0f2fe;
-  --manage-nav-active-color: #0c4a6e;
-  --manage-brand-color: #0f172a;
-  --manage-ext-color: #64748b;
-  --manage-logout-border: #cbd5e1;
-  --manage-logout-color: #475569;
-  --manage-credit-border: #e2e8f0;
-  --manage-theme-toggle-bg: #f8fafc;
-  --manage-theme-toggle-border: #cbd5e1;
-  --manage-theme-toggle-color: #334155;
+  --surface2: #e8ecf1;
+  --surface-hover: #f4f6f9;
+  --text: #3d4f5f;
+  --text-heading: #2b3644;
+  --muted: #8b97a6;
+  --primary: #6c8cff;
+  --primary-hover: #5b7cfa;
+  --primary-soft: #eef2ff;
+  --primary-text: #4c6ef5;
+  --border: #e4e9ef;
+  --border-strong: #d5dce5;
+  --link: #5c7cfa;
+  --shadow-sm: 0 1px 2px rgba(43, 54, 68, 0.04), 0 1px 4px rgba(43, 54, 68, 0.05);
+  --shadow-md: 0 4px 14px rgba(43, 54, 68, 0.07);
+  --success-soft: #ebfbee;
+  --success-text: #2f9e44;
+  --warning-soft: #fff9db;
+  --warning-text: #e67700;
+  --info-soft: #e7f5ff;
+  --info-text: #1c7ed6;
+  --danger-soft: #fff5f5;
+  --danger-text: #e03131;
+
+  --manage-sidebar-bg: #fafbfc;
+  --manage-sidebar-border: #e8ecf1;
+  --manage-nav-color: #6b7c8f;
+  --manage-nav-hover-bg: #f0f3f7;
+  --manage-nav-active-bg: #eef2ff;
+  --manage-nav-active-color: #4c6ef5;
+  --manage-brand-color: #2b3644;
+  --manage-ext-color: #8b97a6;
+  --manage-logout-border: #dce2ea;
+  --manage-logout-color: #6b7c8f;
+  --manage-credit-border: #e8ecf1;
+  --manage-theme-toggle-bg: #ffffff;
+  --manage-theme-toggle-border: #dce2ea;
+  --manage-theme-toggle-color: #6b7c8f;
 }
 
 .manage-app__sidebar {
@@ -59,43 +85,63 @@
   flex-shrink: 0;
 }
 
+.manage-app[data-manage-theme='light'] .manage-app__sidebar {
+  box-shadow: -2px 0 12px rgba(43, 54, 68, 0.04);
+}
+
 .manage-app__brand {
-  font-weight: 800;
-  font-size: 1.2rem;
+  font-weight: 700;
+  font-size: 1.15rem;
   margin-bottom: 1rem;
   color: var(--manage-brand-color);
+  letter-spacing: -0.01em;
 }
 
 .manage-app__user {
   font-size: 0.9rem;
-  color: var(--muted);
+  color: var(--text);
   margin-bottom: 1.25rem;
+  font-weight: 500;
 }
 
 .manage-app__role {
   display: block;
-  color: var(--manage-ext-color);
+  color: var(--muted);
   font-size: 0.75rem;
+  font-weight: 400;
+  margin-top: 0.15rem;
 }
 
 .manage-app__nav {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
   flex: 1;
 }
 
 .manage-app__link {
-  padding: 0.6rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   border-radius: 8px;
   color: var(--manage-nav-color);
   text-decoration: none;
   font-weight: 500;
+  font-size: 0.9rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.manage-app[data-manage-theme='light'] .manage-app__link:hover {
+  background: var(--manage-nav-hover-bg);
+  color: var(--text-heading);
 }
 
 .manage-app__link--active {
   background: var(--manage-nav-active-bg);
   color: var(--manage-nav-active-color);
+  font-weight: 600;
+}
+
+.manage-app[data-manage-theme='light'] .manage-app__link--active {
+  box-shadow: inset 0 0 0 1px rgba(108, 140, 255, 0.2);
 }
 
 .manage-app__external {
@@ -108,6 +154,12 @@
 .manage-app__ext-link {
   color: var(--manage-ext-color);
   font-size: 0.85rem;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.manage-app[data-manage-theme='light'] .manage-app__ext-link:hover {
+  color: var(--link);
 }
 
 .manage-app__theme-toggle {
@@ -122,14 +174,16 @@
   border: 1px solid var(--manage-theme-toggle-border);
   background: var(--manage-theme-toggle-bg);
   color: var(--manage-theme-toggle-color);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.85rem;
   cursor: pointer;
   font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
 }
 
-.manage-app__theme-toggle:hover {
-  filter: brightness(0.97);
+.manage-app[data-manage-theme='light'] .manage-app__theme-toggle:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
 }
 
 .manage-app__logout {
@@ -141,8 +195,16 @@
   border-radius: 8px;
   width: 100%;
   font-family: inherit;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 0.85rem;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.manage-app[data-manage-theme='light'] .manage-app__logout:hover {
+  background: var(--danger-soft);
+  border-color: #ffc9c9;
+  color: var(--danger-text);
 }
 
 .manage-app__main {
@@ -153,21 +215,129 @@
 
 .manage-app .manage-credit {
   border-top-color: var(--manage-credit-border);
+  color: var(--muted);
 }
 
-/* טבלאות ודוחות */
+/* ——— מצב יום: רכיבי CMS גלובליים ——— */
+
+.manage-app[data-manage-theme='light'] h1,
+.manage-app[data-manage-theme='light'] h2 {
+  color: var(--text-heading);
+  font-weight: 700;
+}
+
+.manage-app[data-manage-theme='light'] a {
+  color: var(--link);
+}
+
+.manage-app[data-manage-theme='light'] .card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.manage-app[data-manage-theme='light'] input,
+.manage-app[data-manage-theme='light'] select,
+.manage-app[data-manage-theme='light'] textarea {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text-heading);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 2px rgba(43, 54, 68, 0.03);
+}
+
+.manage-app[data-manage-theme='light'] input::placeholder,
+.manage-app[data-manage-theme='light'] textarea::placeholder {
+  color: #adb5bd;
+}
+
+.manage-app[data-manage-theme='light'] input:focus,
+.manage-app[data-manage-theme='light'] select:focus,
+.manage-app[data-manage-theme='light'] textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(108, 140, 255, 0.18);
+}
+
+.manage-app[data-manage-theme='light'] .btn-primary {
+  background: linear-gradient(180deg, #7c97ff 0%, #6c8cff 100%);
+  color: #fff;
+  border: 1px solid #5b7cfa;
+  box-shadow: 0 1px 2px rgba(92, 124, 250, 0.2);
+  font-weight: 600;
+}
+
+.manage-app[data-manage-theme='light'] .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #6c8cff 0%, #5b7cfa 100%);
+}
+
+.manage-app[data-manage-theme='light'] .btn-success {
+  background: #69db7c;
+  border: 1px solid #51cf66;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(47, 158, 68, 0.15);
+}
+
+.manage-app[data-manage-theme='light'] .btn-warning {
+  background: #ffd43b;
+  border: 1px solid #fcc419;
+  color: #5c4a00;
+}
+
+.manage-app[data-manage-theme='light'] .btn-danger {
+  background: #ff8787;
+  border: 1px solid #ff6b6b;
+  color: #fff;
+}
+
+.manage-app[data-manage-theme='light'] .btn-ghost {
+  background: var(--surface-hover);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.manage-app[data-manage-theme='light'] .btn-ghost:hover:not(:disabled) {
+  background: #e9ecef;
+  color: var(--text-heading);
+}
+
+.manage-app[data-manage-theme='light'] .reports-export-btn {
+  background: linear-gradient(180deg, #63e6be, #38d9a9);
+  border: 1px solid #20c997;
+  box-shadow: 0 1px 2px rgba(32, 201, 151, 0.2);
+}
+
+/* טבלאות */
 .manage-app[data-manage-theme='light'] .report-table th {
-  background: #f1f5f9;
-  color: #475569;
+  background: #f7f9fc;
+  color: #6b7c8f;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
 }
 
-.manage-app[data-manage-theme='light'] .report-table th,
 .manage-app[data-manage-theme='light'] .report-table td {
-  border-bottom-color: #e2e8f0;
+  color: var(--text);
+  border-bottom: 1px solid #f0f3f7;
 }
 
 .manage-app[data-manage-theme='light'] .report-table tbody tr:hover {
-  background: #f8fafc;
+  background: #f8f9fb;
+}
+
+.manage-app[data-manage-theme='light'] .wait-table th {
+  background: #f7f9fc;
+  color: #6b7c8f;
+}
+
+.manage-app[data-manage-theme='light'] .wait-table td {
+  border-top-color: #f0f3f7;
+}
+
+/* משתמשים / סטטוס */
+.manage-app[data-manage-theme='light'] .users-manage__title,
+.manage-app[data-manage-theme='light'] .sys-status__title {
+  color: var(--text-heading);
 }
 
 .manage-app[data-manage-theme='light'] .users-manage__sub,
@@ -178,42 +348,75 @@
 }
 
 .manage-app[data-manage-theme='light'] .users-manage__sub code {
-  color: #334155;
+  color: var(--text);
+  background: var(--surface-hover);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.manage-app[data-manage-theme='light'] .users-manage__msg,
+.manage-app[data-manage-theme='light'] .sys-status__msg {
+  color: var(--success-text);
 }
 
 .manage-app[data-manage-theme='light'] .users-manage__table-wrap {
-  border-color: var(--surface2);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
+.manage-app[data-manage-theme='light'] .users-manage__username,
+.manage-app[data-manage-theme='light'] .users-manage__muted {
+  color: var(--muted);
+}
+
+/* עמדות */
 .manage-app[data-manage-theme='light'] .stations-page__title {
-  color: var(--text);
+  color: var(--text-heading);
+  font-weight: 700;
 }
 
 .manage-app[data-manage-theme='light'] .station-tile {
-  border-color: var(--surface2);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  background: var(--surface);
 }
 
 .manage-app[data-manage-theme='light'] .station-tile:hover {
-  border-color: #94a3b8;
+  border-color: #c5d0de;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .manage-app[data-manage-theme='light'] .station-tile__name {
-  color: var(--text);
+  color: var(--text-heading);
+  font-weight: 600;
 }
 
 .manage-app[data-manage-theme='light'] .station-tile__num {
   color: var(--muted);
 }
 
+/* חדרים */
+.manage-app[data-manage-theme='light'] .rooms-manage__title {
+  color: var(--text-heading);
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__sub {
+  color: var(--muted);
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__list-item:hover {
+  background: var(--surface-hover);
+}
+
 .manage-app[data-manage-theme='light'] .rooms-manage__list-item--on {
-  background: #e0f2fe;
+  background: var(--primary-soft);
   box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .manage-app[data-manage-theme='light'] .rooms-manage__block--queue {
-  background: #f8fafc;
-  border-color: var(--surface2);
+  background: #f8f9fb;
+  border-color: var(--border);
 }
 
 .manage-app[data-manage-theme='light'] .rooms-manage__block--queue .rooms-manage__section-title {
@@ -221,30 +424,50 @@
 }
 
 .manage-app[data-manage-theme='light'] .rooms-manage__mode-btn {
-  background: #fff;
-  border-color: #cbd5e1;
-  color: #475569;
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
 }
 
 .manage-app[data-manage-theme='light'] .rooms-manage__mode-btn--on {
-  background: #e0f2fe;
+  background: var(--primary-soft);
   border-color: var(--primary);
-  color: #0c4a6e;
+  color: var(--primary-text);
 }
 
 .manage-app[data-manage-theme='light'] .rooms-manage__chip {
-  background: #fff;
-  border-color: #cbd5e1;
-  color: #334155;
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__chip--on {
+  color: var(--text-heading);
 }
 
 .manage-app[data-manage-theme='light'] .rooms-manage__hint {
   color: var(--muted);
 }
 
+.manage-app[data-manage-theme='light'] .rooms-manage__link {
+  color: var(--link);
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__preview {
+  background: var(--info-soft);
+  color: var(--info-text);
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__toast {
+  background: var(--success-text);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+/* הגדרות */
 .manage-app[data-manage-theme='light'] .settings-page__title,
 .manage-app[data-manage-theme='light'] .settings-block__title {
-  color: var(--text);
+  color: var(--text-heading);
 }
 
 .manage-app[data-manage-theme='light'] .settings-page__sub,
@@ -256,8 +479,9 @@
 }
 
 .manage-app[data-manage-theme='light'] .settings-tabs {
-  background: #fff;
-  border-color: var(--surface2);
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .manage-app[data-manage-theme='light'] .settings-tabs__btn {
@@ -265,98 +489,214 @@
 }
 
 .manage-app[data-manage-theme='light'] .settings-tabs__btn:hover {
-  background: #f1f5f9;
-  color: var(--text);
+  background: var(--surface-hover);
+  color: var(--text-heading);
+}
+
+.manage-app[data-manage-theme='light'] .settings-tabs__btn--on {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(108, 140, 255, 0.3);
 }
 
 .manage-app[data-manage-theme='light'] .settings-block {
-  border-color: var(--surface2);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
-.manage-app[data-manage-theme='light'] .settings-field input:not([type='checkbox']):not([type='radio']):not([type='range']),
-.manage-app[data-manage-theme='light'] .settings-field select,
-.manage-app[data-manage-theme='light'] .settings-field textarea {
-  background: #fff;
-  border-color: #cbd5e1;
+.manage-app[data-manage-theme='light'] .settings-block__subtitle {
   color: var(--text);
 }
 
 .manage-app[data-manage-theme='light'] .settings-choice {
-  background: #f8fafc;
-  border-color: var(--surface2);
+  background: #fafbfc;
+  border-color: var(--border);
 }
 
 .manage-app[data-manage-theme='light'] .settings-choice:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
 }
 
 .manage-app[data-manage-theme='light'] .settings-choice--on {
-  background: #e0f2fe;
+  background: var(--primary-soft);
+  border-color: var(--primary);
 }
 
 .manage-app[data-manage-theme='light'] .settings-choice__title {
+  color: var(--text-heading);
+}
+
+.manage-app[data-manage-theme='light'] .settings-check {
   color: var(--text);
 }
 
 .manage-app[data-manage-theme='light'] .settings-logo,
 .manage-app[data-manage-theme='light'] .settings-hint code {
-  background: #f8fafc;
-  border-color: var(--surface2);
+  background: #fafbfc;
+  border-color: var(--border);
 }
 
 .manage-app[data-manage-theme='light'] .settings-page__footer {
-  background: linear-gradient(180deg, transparent, var(--bg) 24%);
-  border-top-color: var(--surface2);
+  background: linear-gradient(180deg, transparent, var(--bg) 30%);
+  border-top-color: var(--border);
 }
 
-.manage-app[data-manage-theme='light'] .settings-block__subtitle,
-.manage-app[data-manage-theme='light'] .settings-check {
-  color: #334155;
+.manage-app[data-manage-theme='light'] .settings-toast--ok {
+  background: var(--success-soft);
+  color: var(--success-text);
+  border-color: #b2f2bb;
 }
 
-.manage-app[data-manage-theme='light'] .pw-modal-backdrop {
-  background: rgba(15, 23, 42, 0.45);
+.manage-app[data-manage-theme='light'] .settings-toast--err {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  border-color: #ffc9c9;
 }
 
+.manage-app[data-manage-theme='light'] .settings-link {
+  color: var(--link);
+}
+
+.manage-app[data-manage-theme='light'] .settings-btn-secondary {
+  background: #ffa94d;
+  border: 1px solid #ff922b;
+}
+
+.manage-app[data-manage-theme='light'] .settings-warn {
+  color: var(--warning-text);
+}
+
+/* סטטוס תורים — פסטל עדין */
 .manage-app[data-manage-theme='light'] .status-waiting {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--info-soft);
+  color: var(--info-text);
 }
 
 .manage-app[data-manage-theme='light'] .status-called {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--warning-soft);
+  color: var(--warning-text);
 }
 
 .manage-app[data-manage-theme='light'] .status-serving {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--success-soft);
+  color: var(--success-text);
 }
 
 .manage-app[data-manage-theme='light'] .status-completed {
-  background: #f1f5f9;
-  color: #64748b;
+  background: #f1f3f5;
+  color: var(--muted);
 }
 
-/* התחברות — לפי העדפת ניהול */
+.manage-app[data-manage-theme='light'] .pw-modal-backdrop {
+  background: rgba(43, 54, 68, 0.35);
+}
+
+.manage-app[data-manage-theme='light'] .pw-modal__sub,
+.manage-app[data-manage-theme='light'] .pw-modal__label {
+  color: var(--muted);
+}
+
+/* קישורי דוחות בלוח */
+.manage-app[data-manage-theme='light'] .manage-link {
+  color: var(--link);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.manage-app[data-manage-theme='light'] .manage-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+/* תגיות סטטוס בדוחות */
+.manage-status-pill {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.manage-app[data-manage-theme='dark'] .manage-status-pill--waiting {
+  background: #422006;
+  color: #fbbf24;
+}
+
+.manage-app[data-manage-theme='dark'] .manage-status-pill--called {
+  background: #0c4a6e;
+  color: #7dd3fc;
+}
+
+.manage-app[data-manage-theme='dark'] .manage-status-pill--serving {
+  background: #1e3a5f;
+  color: #93c5fd;
+}
+
+.manage-app[data-manage-theme='dark'] .manage-status-pill--completed {
+  background: #052e16;
+  color: #6ee7b7;
+}
+
+.manage-app[data-manage-theme='dark'] .manage-status-pill--unknown {
+  background: #334155;
+  color: #cbd5e1;
+}
+
+.manage-app[data-manage-theme='light'] .manage-status-pill--waiting {
+  background: var(--info-soft);
+  color: var(--info-text);
+}
+
+.manage-app[data-manage-theme='light'] .manage-status-pill--called {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.manage-app[data-manage-theme='light'] .manage-status-pill--serving {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.manage-app[data-manage-theme='light'] .manage-status-pill--completed {
+  background: #f1f3f5;
+  color: var(--muted);
+}
+
+.manage-app[data-manage-theme='light'] .manage-status-pill--unknown {
+  background: #f1f3f5;
+  color: var(--muted);
+}
+
+/* התחברות */
 .login-page--light {
-  --bg: #f8fafc;
+  --bg: #f0f2f5;
   --surface: #ffffff;
-  --surface2: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  background: linear-gradient(160deg, #e0f2fe, #f8fafc) !important;
+  --surface2: #e8ecf1;
+  --text: #3d4f5f;
+  --muted: #8b97a6;
+  --primary: #6c8cff;
+  background: linear-gradient(165deg, #eef2ff 0%, #f0f2f5 50%, #f8f9fa 100%) !important;
 }
 
 .login-page--light .card {
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e8ecf1;
+  box-shadow: 0 8px 28px rgba(43, 54, 68, 0.08);
 }
 
 .login-page--light .login-page__sub {
-  color: #64748b;
+  color: #8b97a6;
 }
 
 .login-page--light .login-page__home {
-  color: #64748b;
+  color: #8b97a6;
+}
+
+.login-page--light .login-page__home:hover {
+  color: #5c7cfa;
+}
+
+.login-page--light .btn-primary {
+  background: linear-gradient(180deg, #7c97ff 0%, #6c8cff 100%);
+  border: 1px solid #5b7cfa;
 }

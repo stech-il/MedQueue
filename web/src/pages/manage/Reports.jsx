@@ -178,14 +178,14 @@ export default function Reports() {
         <>
           <div style={grid}>
             <Stat label="נכנסו לתור" value={s.total} />
-            <Stat label="ממתינים עכשיו" value={s.waiting} color="#fbbf24" />
-            <Stat label="בטיפול / נקראו" value={s.in_progress} color="#38bdf8" />
-            <Stat label="הושלמו" value={s.completed} color="#34d399" />
-            <Stat label="נקראו (סה״כ)" value={s.called_count} color="#a78bfa" />
-            <Stat label="המתנה ממוצעת" value={formatMin(s.avg_wait_min)} color="#f472b6" />
-            <Stat label="המתנה מקסימלית" value={formatMin(s.max_wait_min)} color="#fb923c" />
+            <Stat label="ממתינים עכשיו" value={s.waiting} color="#e67700" />
+            <Stat label="בטיפול / נקראו" value={s.in_progress} color="#4c6ef5" />
+            <Stat label="הושלמו" value={s.completed} color="#2f9e44" />
+            <Stat label="נקראו (סה״כ)" value={s.called_count} color="#7950f2" />
+            <Stat label="המתנה ממוצעת" value={formatMin(s.avg_wait_min)} color="#d6336c" />
+            <Stat label="המתנה מקסימלית" value={formatMin(s.max_wait_min)} color="#f76707" />
             <Stat label="המתנה מינימלית" value={formatMin(s.min_wait_min)} />
-            <Stat label="זמן טיפול ממוצע" value={formatMin(s.avg_service_min)} color="#2dd4bf" />
+            <Stat label="זמן טיפול ממוצע" value={formatMin(s.avg_service_min)} color="#1098ad" />
             <Stat label="זמן כולל ממוצע" value={formatMin(s.avg_total_min)} subtitle="כניסה → סיום" />
           </div>
 
@@ -332,7 +332,9 @@ export default function Reports() {
                     <td>{t.service_name}</td>
                     <td style={{ color: t.room_color || '#94a3b8' }}>{t.room_name || '—'}</td>
                     <td>
-                      <span style={statusPill(t.status)}>{STATUS_LABEL[t.status] || t.status}</span>
+                      <span className={`manage-status-pill manage-status-pill--${t.status || 'unknown'}`}>
+                        {STATUS_LABEL[t.status] || t.status}
+                      </span>
                     </td>
                     <td>{formatTime(t.created_at)}</td>
                     <td>{formatTime(t.called_at)}</td>
@@ -392,25 +394,6 @@ function Stat({ label, value, color, subtitle }) {
   );
 }
 
-function statusPill(st) {
-  const colors = {
-    waiting: { bg: '#422006', color: '#fbbf24' },
-    called: { bg: '#0c4a6e', color: '#38bdf8' },
-    serving: { bg: '#1e3a5f', color: '#60a5fa' },
-    completed: { bg: '#052e16', color: '#34d399' },
-  };
-  const c = colors[st] || { bg: '#334155', color: '#cbd5e1' };
-  return {
-    display: 'inline-block',
-    padding: '0.15rem 0.5rem',
-    borderRadius: 6,
-    fontSize: '0.8rem',
-    fontWeight: 600,
-    background: c.bg,
-    color: c.color,
-  };
-}
-
 const h1 = { fontSize: '1.75rem', marginBottom: '0.35rem' };
 const sub = { color: 'var(--muted)', marginBottom: '1.25rem' };
 const h2 = { fontSize: '1.15rem', margin: '1.5rem 0 0.65rem' };
@@ -429,12 +412,12 @@ const filtersRow = {
 const flbl = { display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--muted)' };
 const btnRow = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' };
 const secBtn = {
-  background: 'var(--surface2)',
+  background: 'var(--surface-hover, var(--surface2))',
   color: 'var(--text)',
-  border: 'none',
+  border: '1px solid var(--border, var(--surface2))',
   padding: '0.6rem 1rem',
-  borderRadius: 10,
-  fontWeight: 600,
+  borderRadius: 8,
+  fontWeight: 500,
   cursor: 'pointer',
 };
 const periodLbl = { marginTop: '0.75rem', fontSize: '0.9rem', color: 'var(--muted)' };
@@ -452,5 +435,5 @@ const hourBar = {
   overflowX: 'auto',
 };
 const hourCell = { display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 28 };
-const hourFill = { width: 20, background: '#0ea5e9', borderRadius: 4 };
+const hourFill = { width: 20, background: 'var(--primary, #6c8cff)', borderRadius: 4, opacity: 0.85 };
 const hourLbl = { fontSize: '0.65rem', color: 'var(--muted)', marginTop: 4 };
