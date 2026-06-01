@@ -20,12 +20,15 @@ export default function TicketPrint({ ticket, settings, receptionRoom }) {
       printedFor.current = null;
       return;
     }
-    if (ticket.printed || printedFor.current === ticket.id) return;
+    if (ticket.printed && ticket.needs_browser_print === false) return;
+    if (printedFor.current === ticket.id) return;
     printedFor.current = ticket.id;
 
     const timer = setTimeout(() => {
-      printTicketReceipt();
-    }, 400);
+      printTicketReceipt().catch(() => {
+        window.print();
+      });
+    }, 350);
 
     return () => clearTimeout(timer);
   }, [ticket]);

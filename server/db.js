@@ -166,7 +166,7 @@ const defaultSettings = {
   display_center_video: '',
   display_center_slide_seconds: '8',
   ticker_size: 'md',
-  kiosk_print_via: 'browser',
+  kiosk_print_via: 'auto',
   kiosk_printer_name: '',
   tts_playback: 'both',
   backup_auto_daily: '1',

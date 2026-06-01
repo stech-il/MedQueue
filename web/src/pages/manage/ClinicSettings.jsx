@@ -27,8 +27,13 @@ const EDGE_RATES = [
 ];
 
 const KIOSK_PRINT = [
-  { value: 'server', title: 'מהשרת', desc: 'ללא חלון הדפסה · Windows + מדפסת ברירת מחדל' },
-  { value: 'browser', title: 'מהדפדפן', desc: 'Chrome עם --kiosk-printing להדפסה שקטה' },
+  {
+    value: 'auto',
+    title: 'אוטומטי (מומלץ)',
+    desc: 'שרת / סוכן מקומי / דפדפן — תמיד למדפסת ברירת מחדל',
+  },
+  { value: 'server', title: 'מהשרת בלבד', desc: 'Windows מקומי, ללא חלון הדפסה' },
+  { value: 'browser', title: 'מהדפדפן בלבד', desc: 'Chrome עם --kiosk-printing' },
 ];
 
 const TTS_PLAYBACK = [
@@ -47,7 +52,7 @@ const EMPTY_FORM = {
   clinic_logo: '',
   ticker_messages: '',
   ticker_size: 'md',
-  kiosk_print_via: 'server',
+  kiosk_print_via: 'auto',
   kiosk_printer_name: '',
   tts_provider: 'edge',
   tts_edge_voice: 'he-IL-HilaNeural',
@@ -109,7 +114,7 @@ export default function ClinicSettings() {
         clinic_logo: s.clinic_logo || '/logo.svg',
         ticker_messages: s.ticker_messages || '',
         ticker_size: s.ticker_size || 'md',
-        kiosk_print_via: s.kiosk_print_via || 'server',
+        kiosk_print_via: s.kiosk_print_via || 'auto',
         kiosk_printer_name: s.kiosk_printer_name || '',
         tts_provider: s.tts_provider || 'edge',
         tts_edge_voice: s.tts_edge_voice || 'he-IL-HilaNeural',
@@ -430,7 +435,8 @@ export default function ClinicSettings() {
           <section className="settings-block">
             <h2 className="settings-block__title">הדפסת תור בקיוסק</h2>
             <p className="settings-hint settings-hint--top">
-              אחרי בחירת קופת חולים — התור נוצר והדפסה אוטומטית
+              אחרי בחירת קופת חולים — הדפסה אוטומטית למדפסת ברירת המחדל. על Render: הריצו{' '}
+              <code dir="ltr">npm run kiosk:agent</code> במחשב הקיוסק (Windows).
             </p>
             <ChoiceCards
               name="kiosk_print_via"
@@ -438,7 +444,7 @@ export default function ClinicSettings() {
               options={KIOSK_PRINT}
               onChange={(v) => setForm({ ...form, kiosk_print_via: v })}
             />
-            {form.kiosk_print_via === 'server' && (
+            {(form.kiosk_print_via === 'server' || form.kiosk_print_via === 'auto') && (
               <div className="settings-field">
                 <label htmlFor="kiosk_printer_name">שם מדפסת (ריק = ברירת מחדל)</label>
                 <input

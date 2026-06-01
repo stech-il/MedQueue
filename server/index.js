@@ -20,7 +20,7 @@ import {
 import { logStaffActivity } from './activityLog.js';
 import * as backupService from './backup.js';
 import { getSystemStatus } from './systemStatus.js';
-import { printKioskTicket } from './kioskPrint.js';
+import { dispatchKioskPrint } from './kioskPrintDispatch.js';
 import {
   saveDisplaySlide,
   saveDisplayImage,
@@ -152,20 +152,9 @@ app.post('/api/kiosk/ticket', async (req, res) => {
     const ticket = db.createKioskTicket(req.body);
     broadcast('ticket:created', ticket);
     const settings = db.getSettings();
-    const via = settings.kiosk_print_via || 'server';
-    let printed = false;
-    let print_error = null;
-    if (via === 'server') {
-      try {
-        const reception = db.getReceptionRoom();
-        await printKioskTicket(ticket, settings, reception);
-        printed = true;
-      } catch (e) {
-        print_error = e.message;
-        console.warn('Kiosk server print:', e.message);
-      }
-    }
-    res.status(201).json({ ...ticket, printed, print_error });
+    const reception = db.getReceptionRoom();
+    const printResult = await dispatchKioskPrint(io, ticket, settings, reception);
+    res.status(201).json({ ...ticket, ...printResult });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -689,6 +678,9 @@ io.on('connection', (socket) => {
   socket.on('subscribe:lobby', () => {
     socket.join('lobby');
     socket.emit('lobby:state', db.getLobbyDisplay());
+  });
+  socket.on('subscribe:kiosk-print', () => {
+    socket.join('kiosk-print');
   });
 });
 
