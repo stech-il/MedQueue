@@ -29,15 +29,19 @@ body {
 }
 .receipt__logo-wrap {
   text-align: center;
-  padding: 3mm 4mm 0;
+  padding: 4mm 4mm 3mm;
   background: #fff;
+  border-bottom: 3px solid #0d9488;
 }
 .receipt__logo {
   display: block;
-  max-height: 14mm;
-  max-width: 50mm;
+  max-height: 18mm;
+  max-width: 58mm;
   margin: 0 auto;
   object-fit: contain;
+}
+.receipt__top--fallback {
+  padding: 5mm 4mm;
 }
 .receipt__clinic {
   margin: 0;
