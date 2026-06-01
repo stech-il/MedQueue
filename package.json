@@ -19,7 +19,8 @@
     "setup": "npm install --prefix server && npm install --prefix web",
     "install:all": "npm install && npm run setup",
     "render:build": "npm install --prefix server && npm install --prefix web --include=dev && npm run build --prefix web",
-    "kiosk:agent": "node --experimental-sqlite scripts/kiosk-print-agent.mjs"
+    "kiosk:agent": "node --experimental-sqlite scripts/kiosk-print-agent.mjs",
+    "kiosk:print-server": "node scripts/kiosk-print-server.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

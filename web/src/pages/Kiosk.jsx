@@ -9,7 +9,7 @@ import OnScreenKeyboard from '../components/OnScreenKeyboard';
 import KioskHealthFundPicker from '../components/KioskHealthFundPicker';
 
 import { validatePhoneDigits, validateIdDigits } from '../lib/israeliValidators';
-import { isKioskSilentPrintUrl } from '../lib/kioskPrintMode';
+import { isLocalPrintServerUp } from '../lib/printTicket';
 
 
 
@@ -72,24 +72,20 @@ export default function Kiosk() {
   const [error, setError] = useState('');
 
   const [printNote, setPrintNote] = useState('');
-  const [printSetupHint, setPrintSetupHint] = useState(() => !isKioskSilentPrintUrl());
+  const [printSetupHint, setPrintSetupHint] = useState(false);
 
   const submittingRef = useRef(false);
 
-
+  useEffect(() => {
+    isLocalPrintServerUp().then((up) => setPrintSetupHint(!up));
+  }, []);
 
   useEffect(() => {
-
     api.getKioskConfig().then((cfg) => {
-
       setSettings(cfg.settings || {});
-
       setReceptionRoom(cfg.reception_room);
-
       setHealthFunds(cfg.health_funds || []);
-
     });
-
   }, []);
 
 
@@ -308,12 +304,12 @@ export default function Kiosk() {
 
       {printSetupHint && (
         <div className="kiosk-page__print-setup" role="alert">
-          <strong>הדפסה אוטומטית לא מוגדרת</strong>
-          <p>סגרו את Chrome ופתחו רק את הקיצור «MedQueue קיוסק» בשולחן העבודה, או הריצו:</p>
+          <strong>שרת ההדפסה המקומי לא פעיל</strong>
+          <p>סגרו הכל ופתחו מהקיצור <strong>MedQueue Kiosk</strong> בשולחן העבודה.</p>
+          <p>חייב להישאר פתוח חלון שחור עם הטקסט:</p>
           <p dir="ltr" className="kiosk-page__print-setup-cmd">
-            scripts\start-kiosk-render.bat
+            MedQueue local print → http://127.0.0.1:39123
           </p>
-          <p>אל תגלשו לקיוסק מהסמל הרגיל של Chrome.</p>
         </div>
       )}
 
@@ -511,7 +507,10 @@ export default function Kiosk() {
         ticket={step === 'done' && ticket && !ticket.printed ? ticket : null}
         settings={settings}
         receptionRoom={receptionRoom}
-        onPrintBlocked={() => setPrintSetupHint(true)}
+        onPrintFailed={(msg) => {
+          setPrintSetupHint(true);
+          setPrintNote(msg || 'הדפסה נכשלה — הפעילו MedQueue Kiosk מהקיצור');
+        }}
       />
 
 

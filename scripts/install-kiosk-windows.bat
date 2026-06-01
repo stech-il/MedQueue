@@ -20,7 +20,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-echo [1/3] מתקין סוכן הדפסה...
+echo [1/3] מתקין שרת הדפסה מקומי...
 call npm install --prefix server
 if errorlevel 1 (
   echo [X] התקנה נכשלה

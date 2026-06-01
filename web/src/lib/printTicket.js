@@ -1,40 +1,46 @@
-function waitForImages(root, ms = 2500) {
-  const imgs = [...root.querySelectorAll('img')].filter((img) => !img.complete);
-  if (!imgs.length) return Promise.resolve();
-  return Promise.race([
-    Promise.all(
-      imgs.map(
-        (img) =>
-          new Promise((resolve) => {
-            img.addEventListener('load', resolve, { once: true });
-            img.addEventListener('error', resolve, { once: true });
-          })
-      )
-    ),
-    new Promise((resolve) => setTimeout(resolve, ms)),
-  ]);
+const LOCAL_PRINT_URL = 'http://127.0.0.1:39123';
+
+export async function isLocalPrintServerUp() {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 1200);
+    const res = await fetch(`${LOCAL_PRINT_URL}/health`, {
+      signal: ctrl.signal,
+      mode: 'cors',
+    });
+    clearTimeout(t);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** הדפסה שקטה דרך שרת מקומי (מומלץ עם Render) */
+export async function printTicketViaLocal(ticket, settings, receptionRoom) {
+  const res = await fetch(`${LOCAL_PRINT_URL}/print`, {
+    method: 'POST',
+    mode: 'cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ticket,
+      settings: settings || {},
+      reception_room: receptionRoom || null,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || 'הדפסה מקומית נכשלה');
+  }
+  return data;
 }
 
 /**
- * הדפסה למדפסת ברירת מחדל (דפדפן).
- * ללא חלון: Chrome עם --kiosk-printing.
+ * הדפסת כרטיס — קודם שרת מקומי (ללא דיאלוג).
+ * לא קורא ל-window.print (גורם לחלון הדפסה ב-Chrome).
  */
-export async function printTicketReceipt() {
-  const area = document.querySelector('.print-area');
-  if (!area) {
-    window.print();
-    return;
+export async function printTicketReceipt(ticket, settings, receptionRoom) {
+  if (!ticket) {
+    throw new Error('אין נתוני תור להדפסה');
   }
-
-  await waitForImages(area);
-
-  document.body.classList.add('is-printing-ticket');
-  const cleanup = () => {
-    document.body.classList.remove('is-printing-ticket');
-  };
-  window.addEventListener('afterprint', cleanup, { once: true });
-  await new Promise((resolve) => setTimeout(resolve, 80));
-  window.focus();
-  window.print();
-  setTimeout(cleanup, 8000);
+  await printTicketViaLocal(ticket, settings, receptionRoom);
 }

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { printTicketReceipt } from '../lib/printTicket';
-import { isKioskSilentPrintUrl } from '../lib/kioskPrintMode';
 import { buildTicketReceiptData } from '../lib/ticketReceipt';
 
 function ReceiptRow({ label, value }) {
@@ -13,7 +12,7 @@ function ReceiptRow({ label, value }) {
   );
 }
 
-export default function TicketPrint({ ticket, settings, receptionRoom, onPrintBlocked }) {
+export default function TicketPrint({ ticket, settings, receptionRoom, onPrintFailed }) {
   const printedFor = useRef(null);
 
   useEffect(() => {
@@ -26,17 +25,13 @@ export default function TicketPrint({ ticket, settings, receptionRoom, onPrintBl
     printedFor.current = ticket.id;
 
     const timer = setTimeout(() => {
-      if (!isKioskSilentPrintUrl()) {
-        onPrintBlocked?.();
-        return;
-      }
-      printTicketReceipt().catch(() => {
-        window.print();
+      printTicketReceipt(ticket, settings, receptionRoom).catch((e) => {
+        onPrintFailed?.(e?.message || 'הדפסה נכשלה');
       });
-    }, 400);
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [ticket, onPrintBlocked]);
+  }, [ticket, settings, receptionRoom, onPrintFailed]);
 
   if (!ticket) return null;
 

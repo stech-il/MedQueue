@@ -61,9 +61,9 @@ if ($chromeOk) {
   $profile = Join-Path $env:LOCALAPPDATA 'MedQueueKioskChrome'
   $chromeArgs = (
     '--kiosk',
-    '--kiosk-printing',
     '--disable-print-preview',
     '--no-first-run',
+    '--unsafely-treat-insecure-origin-as-secure=http://127.0.0.1:39123',
     ('--user-data-dir=' + [char]34 + $profile + [char]34),
     ($kioskUrl)
   ) -join ' '

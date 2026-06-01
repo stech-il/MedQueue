@@ -23,9 +23,9 @@ timeout /t 2 /nobreak >nul
 
 start "" "%CHROME%" ^
   --kiosk ^
-  --kiosk-printing ^
   --disable-print-preview ^
   --no-first-run ^
   --no-default-browser-check ^
+  --unsafely-treat-insecure-origin-as-secure=http://127.0.0.1:39123 ^
   --user-data-dir="%PROFILE%" ^
   "%KIOSK_URL%"
