@@ -7,7 +7,14 @@ const KEYPAD_ROWS = [
   ['מחק', '0', '⌫'],
 ];
 
-export default function OnScreenKeyboard({ value, onChange, maxLength = 10, displayText }) {
+export default function OnScreenKeyboard({
+  value,
+  onChange,
+  maxLength = 10,
+  displayText,
+  valid = null,
+  hint = '',
+}) {
   const press = (key) => {
     if (key === 'מחק') {
       onChange('');
@@ -23,9 +30,15 @@ export default function OnScreenKeyboard({ value, onChange, maxLength = 10, disp
 
   return (
     <div className="kiosk-keyboard" dir="ltr">
-      <div className="kiosk-keyboard__display" aria-live="polite">
+      <div
+        className={`kiosk-keyboard__display${
+          valid === true ? ' kiosk-keyboard__display--valid' : ''
+        }${valid === false ? ' kiosk-keyboard__display--invalid' : ''}`}
+        aria-live="polite"
+      >
         {displayText || '—'}
       </div>
+      {hint ? <p className="kiosk-keyboard__hint">{hint}</p> : null}
       <div className="kiosk-keyboard__keys">
         {KEYPAD_ROWS.map((row) =>
           row.map((key) => (

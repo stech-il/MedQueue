@@ -16,26 +16,46 @@ export function validatePhoneDigits(digits) {
   return { ok: true, normalized: n };
 }
 
+/** קיוסק — טלפון נייד בלבד (05XXXXXXXX) */
+export function validateMobilePhoneDigits(digits) {
+  const n = normalizePhoneDigits(digits);
+  if (!n) return { ok: false, error: 'יש להזין מספר טלפון נייד' };
+  if (n.length < 10) {
+    return { ok: false, error: 'יש להשלים 10 ספרות', incomplete: true };
+  }
+  if (!/^05\d{8}$/.test(n)) {
+    return { ok: false, error: 'מספר נייד לא תקין — חייב להתחיל ב-05 ולהכיל 10 ספרות' };
+  }
+  return { ok: true, normalized: n };
+}
+
 export function normalizeIdDigits(input) {
   let s = String(input).replace(/\D/g, '');
   if (s.length === 8) s = '0' + s;
   return s;
 }
 
-export function validateIdDigits(digits) {
-  let s = normalizeIdDigits(digits);
-  if (!s) return { ok: false, error: 'יש להזין תעודת זהות' };
-  if (!/^\d{9}$/.test(s)) {
-    return { ok: false, error: 'תעודת זהות חייבת להכיל 9 ספרות' };
-  }
+function idChecksumValid(s) {
   let sum = 0;
   for (let i = 0; i < 9; i++) {
     let inc = Number(s[i]) * ((i % 2) + 1);
     if (inc > 9) inc -= 9;
     sum += inc;
   }
-  if (sum % 10 !== 0) {
-    return { ok: false, error: 'תעודת זהות לא תקינה' };
+  return sum % 10 === 0;
+}
+
+export function validateIdDigits(digits) {
+  let s = normalizeIdDigits(digits);
+  if (!s) return { ok: false, error: 'יש להזין תעודת זהות' };
+  if (s.length < 9) {
+    return { ok: false, error: 'יש להשלים 9 ספרות', incomplete: true };
+  }
+  if (!/^\d{9}$/.test(s)) {
+    return { ok: false, error: 'תעודת זהות חייבת להכיל 9 ספרות' };
+  }
+  if (!idChecksumValid(s)) {
+    return { ok: false, error: 'תעודת זהות לא תקינה — בדקו את המספר' };
   }
   return { ok: true, normalized: s };
 }

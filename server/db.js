@@ -232,6 +232,15 @@ export function validatePhone(phone) {
   return n;
 }
 
+/** קיוסק — טלפון נייד ישראלי (05XXXXXXXX) */
+export function validateMobilePhone(phone) {
+  const n = normalizePhone(phone);
+  if (!/^05\d{8}$/.test(n)) {
+    throw new Error('מספר טלפון נייד לא תקין (10 ספרות, מתחיל ב-05)');
+  }
+  return n;
+}
+
 export function validateIsraeliId(id) {
   let s = String(id).replace(/\D/g, '');
   if (s.length === 8) s = '0' + s;
@@ -520,7 +529,7 @@ export function createTicket({
 }
 
 export function createKioskTicket({ phone, id_number, health_fund }) {
-  const normalizedPhone = validatePhone(phone);
+  const normalizedPhone = validateMobilePhone(phone);
   const normalizedId = validateIsraeliId(id_number);
   const fund = String(health_fund || '').trim();
   if (!fund) throw new Error('יש לבחור קופת חולים');

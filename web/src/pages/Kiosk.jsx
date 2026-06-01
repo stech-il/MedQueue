@@ -6,7 +6,10 @@ import OnScreenKeyboard from '../components/OnScreenKeyboard';
 
 import KioskHealthFundPicker from '../components/KioskHealthFundPicker';
 
-import { validatePhoneDigits, validateIdDigits } from '../lib/israeliValidators';
+import {
+  validateMobilePhoneDigits,
+  validateIdDigits,
+} from '../lib/israeliValidators';
 
 
 
@@ -78,50 +81,47 @@ export default function Kiosk() {
     });
   }, []);
 
+  useEffect(() => {
+    if (step !== 'fund') return;
+    const p = validateMobilePhoneDigits(phoneDigits);
+    const i = validateIdDigits(idDigits);
+    if (!p.ok) {
+      setStep('phone');
+      setError(p.error);
+    } else if (!i.ok) {
+      setStep('id');
+      setError(i.error);
+    }
+  }, [step, phoneDigits, idDigits]);
+
 
 
   const phoneDisplay = formatPhoneDisplay(phoneDigits);
-
   const idDisplay = formatIdDisplay(idDigits);
+  const phoneCheck = validateMobilePhoneDigits(phoneDigits);
+  const idCheck = validateIdDigits(idDigits);
+  const canContinuePhone = phoneCheck.ok;
+  const canContinueId = idCheck.ok;
 
   const goNext = () => {
-
     setError('');
 
     if (step === 'phone') {
-
-      const phoneCheck = validatePhoneDigits(phoneDigits);
-
       if (!phoneCheck.ok) {
-
         setError(phoneCheck.error);
-
         return;
-
       }
-
       setStep('id');
-
       return;
-
     }
 
     if (step === 'id') {
-
-      const idCheck = validateIdDigits(idDigits);
-
       if (!idCheck.ok) {
-
         setError(idCheck.error);
-
         return;
-
       }
-
       setStep('fund');
-
     }
-
   };
 
 
@@ -156,16 +156,14 @@ export default function Kiosk() {
 
 
 
-      const phoneCheck = validatePhoneDigits(phoneDigits);
+      const phoneRecheck = validateMobilePhoneDigits(phoneDigits);
+      const idRecheck = validateIdDigits(idDigits);
 
-      const idCheck = validateIdDigits(idDigits);
-
-      if (!phoneCheck.ok || !idCheck.ok) {
-
-        setError(phoneCheck.error || idCheck.error);
-
+      if (!phoneRecheck.ok || !idRecheck.ok) {
+        setError(phoneRecheck.error || idRecheck.error);
+        if (!phoneRecheck.ok) setStep('phone');
+        else setStep('id');
         return;
-
       }
 
 
@@ -184,9 +182,9 @@ export default function Kiosk() {
 
         const created = await api.createKioskTicket({
 
-          phone: phoneCheck.normalized,
+          phone: phoneRecheck.normalized,
 
-          id_number: idCheck.normalized,
+          id_number: idRecheck.normalized,
 
           health_fund: fund,
 
@@ -280,21 +278,19 @@ export default function Kiosk() {
             <h2 className="kiosk-page__step-title">נא להכניס מספר טלפון נייד</h2>
 
             <OnScreenKeyboard
-
               value={phoneDigits}
-
               displayText={phoneDisplay}
-
+              valid={phoneDigits.length > 0 ? phoneCheck.ok : null}
+              hint={
+                !phoneCheck.ok && phoneDigits.length > 0
+                  ? phoneCheck.error
+                  : '10 ספרות, מתחיל ב-05'
+              }
               onChange={(v) => {
-
                 setPhoneDigits(v.replace(/\D/g, '').slice(0, 10));
-
                 setError('');
-
               }}
-
               maxLength={10}
-
             />
 
           </section>
@@ -310,21 +306,17 @@ export default function Kiosk() {
             <h2 className="kiosk-page__step-title">נא להכניס ת.ז.</h2>
 
             <OnScreenKeyboard
-
               value={idDigits}
-
               displayText={idDisplay}
-
+              valid={idDigits.length > 0 ? idCheck.ok : null}
+              hint={
+                !idCheck.ok && idDigits.length > 0 ? idCheck.error : '9 ספרות כולל ספרת ביקורת'
+              }
               onChange={(v) => {
-
                 setIdDigits(v.replace(/\D/g, '').slice(0, 9));
-
                 setError('');
-
               }}
-
               maxLength={9}
-
             />
 
           </section>
@@ -398,11 +390,12 @@ export default function Kiosk() {
                 className="btn-primary kiosk-page__next"
 
                 onClick={goNext}
-
-                disabled={loading}
-
+                disabled={
+                  loading ||
+                  (step === 'phone' && !canContinuePhone) ||
+                  (step === 'id' && !canContinueId)
+                }
               >
-
                 {loading ? 'ממתין…' : 'המשך'}
 
               </button>

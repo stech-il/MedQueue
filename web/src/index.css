@@ -2719,7 +2719,7 @@ select:focus {
   font-weight: 700;
   text-align: center;
   padding: 1rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem;
   background: #1e293b;
   border-radius: 12px;
   border: 2px solid #334155;
@@ -2727,6 +2727,29 @@ select:focus {
   letter-spacing: 0.08em;
   line-height: 1.4;
   color: #f8fafc;
+}
+
+.kiosk-keyboard__display--valid {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+}
+
+.kiosk-keyboard__display--invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.kiosk-keyboard__hint {
+  margin: 0 0 0.65rem;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.kiosk-keyboard__display--invalid + .kiosk-keyboard__hint {
+  color: #fca5a5;
 }
 
 .kiosk-keyboard__keys {
