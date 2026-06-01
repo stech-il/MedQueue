@@ -29,7 +29,7 @@ if errorlevel 1 (
 )
 
 echo [2/3] יוצר קיצור דרך על שולחן העבודה...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0create-kiosk-desktop-shortcut.ps1" -BaseUrl "%BASE%" -ProjectRoot "%ROOT%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0create-kiosk-desktop-shortcut.ps1" -ProjectRoot "%ROOT%"
 
 echo [3/3] סיום.
 echo.

@@ -3,14 +3,23 @@ chcp 65001 >nul
 title MedQueue קיוסק
 set "BASE=%~1"
 if "%BASE%"=="" (
+  if exist "%~dp0medqueue-kiosk.url.txt" (
+    set /p BASE=<"%~dp0medqueue-kiosk.url.txt"
+  )
+)
+if "%BASE%"=="" (
   echo.
   echo  שימוש:
   echo    start-kiosk-render.bat https://medqueue-6ivj.onrender.com
-  echo.
-  echo  או הרץ פעם אחת: install-kiosk-windows.bat
+  echo  או: start-kiosk-medqueue.bat
   pause
   exit /b 1
 )
+
+REM בסיס בלבד — בלי /kiosk בסוף (מונע /kiosk/kiosk)
+:trim_base
+if "%BASE:~-1%"=="/" set "BASE=%BASE:~0,-1%" & goto trim_base
+if /i "%BASE:~-5%"=="/kiosk" set "BASE=%BASE:~0,-5%" & goto trim_base
 
 set "ROOT=%~dp0.."
 cd /d "%ROOT%"
@@ -29,6 +38,7 @@ if not exist "%ROOT%\server\node_modules\pdf-to-printer" (
 
 set "MEDQUEUE_URL=%BASE%"
 set "KIOSK_URL=%BASE%/kiosk?kiosk=1"
+echo  כתובת קיוסק: %KIOSK_URL%
 
 echo.
 echo  מפעיל סוכן הדפסה ^(חלון שחור — אל תסגור^)...
