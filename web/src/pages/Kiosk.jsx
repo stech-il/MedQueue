@@ -2,8 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { api } from '../api';
 
-import TicketPrint from '../components/TicketPrint';
-
 import OnScreenKeyboard from '../components/OnScreenKeyboard';
 
 import KioskHealthFundPicker from '../components/KioskHealthFundPicker';
@@ -16,7 +14,7 @@ const STEPS = ['phone', 'id', 'fund', 'done'];
 
 /** שניות להצגת מספר התור לפני חזרה אוטומטית למסך הראשי */
 
-const DONE_SCREEN_SECONDS = 5;
+const DONE_SCREEN_SECONDS = 8;
 
 
 
@@ -70,7 +68,6 @@ export default function Kiosk() {
 
   const [error, setError] = useState('');
 
-  const [printNote, setPrintNote] = useState('');
   const submittingRef = useRef(false);
 
   useEffect(() => {
@@ -86,10 +83,6 @@ export default function Kiosk() {
   const phoneDisplay = formatPhoneDisplay(phoneDigits);
 
   const idDisplay = formatIdDisplay(idDigits);
-
-  const printVia = settings.kiosk_print_via || 'auto';
-
-
 
   const goNext = () => {
 
@@ -183,8 +176,6 @@ export default function Kiosk() {
 
       setError('');
 
-      setPrintNote('');
-
       setHealthFund(fund);
 
 
@@ -204,17 +195,6 @@ export default function Kiosk() {
         setTicket(created);
 
         setStep('done');
-
-
-
-        if (created.printed) {
-          setPrintNote('הכרטיס הודפס למדפסת ברירת המחדל');
-        } else if (created.print_error && printVia !== 'browser') {
-          setPrintNote(`הדפסה אוטומטית נכשלה — ${created.print_error}`);
-        } else if (created.needs_browser_print !== false) {
-          setPrintNote('מדפיס למדפסת ברירת המחדל…');
-        }
-
       } catch (e) {
 
         setError(e.message);
@@ -229,7 +209,7 @@ export default function Kiosk() {
 
     },
 
-    [healthFund, phoneDigits, idDigits, printVia]
+    [healthFund, phoneDigits, idDigits]
 
   );
 
@@ -259,8 +239,6 @@ export default function Kiosk() {
 
     setError('');
 
-    setPrintNote('');
-
   }, []);
 
 
@@ -276,8 +254,6 @@ export default function Kiosk() {
   }, [step, ticket, reset]);
 
 
-
-  const roomLabel = receptionRoom?.name || ticket?.room_name || 'קבלה';
 
   const clinicName = settings.clinic_name || 'מוקד רפואי';
 
@@ -363,7 +339,7 @@ export default function Kiosk() {
 
             <h2 className="kiosk-page__step-title">אנא בחר קופה</h2>
 
-            <p className="kiosk-page__fund-hint">לאחר הבחירה התור יונפק ויודפס אוטומטית</p>
+            <p className="kiosk-page__fund-hint">לאחר הבחירה יוצג מספר התור על המסך</p>
 
             <KioskHealthFundPicker
 
@@ -377,7 +353,7 @@ export default function Kiosk() {
 
             />
 
-            {loading && <p className="kiosk-page__loading">מנפיק תור ומדפיס…</p>}
+            {loading && <p className="kiosk-page__loading">מנפיק תור…</p>}
 
           </section>
 
@@ -387,34 +363,10 @@ export default function Kiosk() {
 
         {step === 'done' && ticket && (
 
-          <section className="kiosk-page__done">
-
+          <section className="kiosk-page__done" aria-live="polite">
+            <p className="kiosk-page__done-label">מספר התור שלך</p>
             <div className="kiosk-page__big-code">{ticket.display_code}</div>
-
-            <p className="kiosk-page__success">התור נוצר בהצלחה</p>
-
-            <div className="kiosk-page__direction">
-
-              <span className="kiosk-page__arrow">➜</span>
-
-              <div>
-
-                <p className="kiosk-page__dir-label">נא לגשת ל</p>
-
-                <p className="kiosk-page__dir-room">{roomLabel}</p>
-
-              </div>
-
-            </div>
-
-            {printNote && <p className="kiosk-page__print-note">{printNote}</p>}
-
-            <button type="button" className="btn-success kiosk-page__again" onClick={reset}>
-
-              תור נוסף עכשיו
-
-            </button>
-
+            <p className="kiosk-page__done-hint">המתן להקריאת התור על המסך</p>
           </section>
 
         )}
@@ -482,17 +434,6 @@ export default function Kiosk() {
         {step === 'fund' && error && <p className="kiosk-page__error">{error}</p>}
 
       </main>
-
-
-
-      <TicketPrint
-        ticket={step === 'done' && ticket && !ticket.printed ? ticket : null}
-        settings={settings}
-        receptionRoom={receptionRoom}
-        onPrintFailed={(msg) => {
-          setPrintNote(msg || 'הדפסה נכשלה — ודאו שחלון MedQueue Local Print פתוח');
-        }}
-      />
 
 
 

@@ -12,7 +12,16 @@ function kioskPrintAgentCount(io) {
  * 3) דפדפן הקיוסק (גיבוי — Chrome עם --kiosk-printing)
  */
 export async function dispatchKioskPrint(io, ticket, settings, receptionRoom) {
-  const via = settings.kiosk_print_via || 'auto';
+  const via = settings.kiosk_print_via || 'none';
+
+  if (via === 'none') {
+    return {
+      printed: false,
+      needs_browser_print: false,
+      print_error: null,
+      print_channel: 'none',
+    };
+  }
 
   if (via === 'browser') {
     return { printed: false, needs_browser_print: true, print_error: null, print_channel: 'browser' };

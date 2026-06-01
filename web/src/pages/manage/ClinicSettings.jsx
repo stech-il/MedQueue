@@ -34,11 +34,16 @@ const KIOSK_PRINT_FORMAT = [
 
 const KIOSK_PRINT = [
   {
-    value: 'auto',
-    title: 'אוטומטי (מומלץ)',
-    desc: 'שרת / סוכן מקומי / דפדפן — תמיד למדפסת ברירת מחדל',
+    value: 'none',
+    title: 'ללא הדפסה (מסך בלבד)',
+    desc: 'מספר תור גדול על המסך — מומלץ לקיוסק',
   },
-  { value: 'server', title: 'מהשרת בלבד', desc: 'Windows מקומי, ללא חלון הדפסה' },
+  {
+    value: 'auto',
+    title: 'הדפסה אוטומטית',
+    desc: 'שרת / סוכן מקומי / דפדפן',
+  },
+  { value: 'server', title: 'מהשרת בלבד', desc: 'Windows מקומי' },
   { value: 'browser', title: 'מהדפדפן בלבד', desc: 'Chrome עם --kiosk-printing' },
 ];
 
@@ -58,7 +63,7 @@ const EMPTY_FORM = {
   clinic_logo: '',
   ticker_messages: '',
   ticker_size: 'md',
-  kiosk_print_via: 'auto',
+  kiosk_print_via: 'none',
   kiosk_print_format: 'html',
   kiosk_printer_name: '',
   tts_provider: 'edge',
@@ -121,7 +126,7 @@ export default function ClinicSettings() {
         clinic_logo: s.clinic_logo || '/logo.svg',
         ticker_messages: s.ticker_messages || '',
         ticker_size: s.ticker_size || 'md',
-        kiosk_print_via: s.kiosk_print_via || 'auto',
+        kiosk_print_via: s.kiosk_print_via || 'none',
         kiosk_print_format: s.kiosk_print_format || 'html',
         kiosk_printer_name: s.kiosk_printer_name || '',
         tts_provider: s.tts_provider || 'edge',
@@ -443,35 +448,40 @@ export default function ClinicSettings() {
           <section className="settings-block">
             <h2 className="settings-block__title">הדפסת תור בקיוסק</h2>
             <p className="settings-hint settings-hint--top">
-              אחרי בחירת קופת חולים — הדפסה אוטומטית למדפסת ברירת מחדל. על Render: קיצור{' '}
-              <strong>MedQueue Kiosk</strong> במחשב Windows.
+              ברירת מחדל: מספר תור גדול על מסך הקיוסק, בלי הדפסה. להפעלת מדפסת — בחרו מצב הדפסה
+              למטה.
             </p>
-            <h3 className="settings-block__subtitle">פורמט הדפסה (מחשב קיוסק)</h3>
-            <ChoiceCards
-              name="kiosk_print_format"
-              value={form.kiosk_print_format}
-              options={KIOSK_PRINT_FORMAT}
-              onChange={(v) => setForm({ ...form, kiosk_print_format: v })}
-            />
-            <h3 className="settings-block__subtitle">איך שולחים להדפסה</h3>
+            <h3 className="settings-block__subtitle">הדפסה</h3>
             <ChoiceCards
               name="kiosk_print_via"
               value={form.kiosk_print_via}
               options={KIOSK_PRINT}
               onChange={(v) => setForm({ ...form, kiosk_print_via: v })}
             />
-            {(form.kiosk_print_via === 'server' || form.kiosk_print_via === 'auto') && (
-              <div className="settings-field">
-                <label htmlFor="kiosk_printer_name">שם מדפסת (ריק = ברירת מחדל)</label>
-                <input
-                  id="kiosk_printer_name"
-                  value={form.kiosk_printer_name}
-                  onChange={(e) => setForm({ ...form, kiosk_printer_name: e.target.value })}
-                  placeholder="HP Smart Tank 610 series"
-                  dir="ltr"
+            {form.kiosk_print_via !== 'none' && (
+              <>
+                <h3 className="settings-block__subtitle">פורמט הדפסה</h3>
+                <ChoiceCards
+                  name="kiosk_print_format"
+                  value={form.kiosk_print_format}
+                  options={KIOSK_PRINT_FORMAT}
+                  onChange={(v) => setForm({ ...form, kiosk_print_format: v })}
                 />
-              </div>
+              </>
             )}
+            {form.kiosk_print_via !== 'none' &&
+              (form.kiosk_print_via === 'server' || form.kiosk_print_via === 'auto') && (
+                <div className="settings-field">
+                  <label htmlFor="kiosk_printer_name">שם מדפסת (ריק = ברירת מחדל)</label>
+                  <input
+                    id="kiosk_printer_name"
+                    value={form.kiosk_printer_name}
+                    onChange={(e) => setForm({ ...form, kiosk_printer_name: e.target.value })}
+                    placeholder="HP Smart Tank 610 series"
+                    dir="ltr"
+                  />
+                </div>
+              )}
           </section>
         )}
 
