@@ -1,6 +1,4 @@
-import { visualLtr, visualRtl } from './rtlText.js';
-
-/** עיצוב כרטיס תור להדפסת PDF (80mm) — תואם ל-web */
+/** עיצוב כרטיס תור להדפסה — תואם ל-web */
 
 export function formatReceiptPhone(phone) {  const d = String(phone || '').replace(/\D/g, '');
   if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
@@ -36,25 +34,13 @@ export function pdfReceiptRow(doc, label, value, fontPath) {
   if (!value) return;
   const w = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const val = String(value);
-  const ltrOnly = /^[\d\s+\-().:]+$/.test(val.replace(/-/g, ''));
 
-  doc.font(fontPath).fontSize(10).fillColor('#555555').text(visualRtl(label), {
+  doc.font(fontPath).fontSize(10).fillColor('#555555').text(label, {
     align: 'right',
     width: w,
   });
-  doc
-    .fontSize(13)
-    .fillColor('#000000')
-    .text(ltrOnly ? visualLtr(val) : visualRtl(val), { align: 'right', width: w });
+  doc.fontSize(13).fillColor('#000000').text(val, { align: 'right', width: w });
   doc.moveDown(0.18);
-}
-
-export function pdfRtlCenter(doc, text, opts = {}) {
-  doc.text(visualRtl(text), { align: 'center', ...opts });
-}
-
-export function pdfLtrCenter(doc, text, opts = {}) {
-  doc.text(visualLtr(text), { align: 'center', ...opts });
 }
 export function pdfDashedLine(doc) {
   const x0 = doc.page.margins.left;

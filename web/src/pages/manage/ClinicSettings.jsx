@@ -26,6 +26,11 @@ const EDGE_RATES = [
   { value: '+10%', label: 'מהיר' },
 ];
 
+const KIOSK_PRINT_FORMAT = [
+  { value: 'text', title: 'טקסט (מומלץ)', desc: 'בלי PDF — עברית בסדר נכון, דרך Windows' },
+  { value: 'pdf', title: 'PDF', desc: 'גיבוי — אם טקסט לא יוצא טוב' },
+];
+
 const KIOSK_PRINT = [
   {
     value: 'auto',
@@ -53,6 +58,7 @@ const EMPTY_FORM = {
   ticker_messages: '',
   ticker_size: 'md',
   kiosk_print_via: 'auto',
+  kiosk_print_format: 'text',
   kiosk_printer_name: '',
   tts_provider: 'edge',
   tts_edge_voice: 'he-IL-HilaNeural',
@@ -115,6 +121,7 @@ export default function ClinicSettings() {
         ticker_messages: s.ticker_messages || '',
         ticker_size: s.ticker_size || 'md',
         kiosk_print_via: s.kiosk_print_via || 'auto',
+        kiosk_print_format: s.kiosk_print_format || 'text',
         kiosk_printer_name: s.kiosk_printer_name || '',
         tts_provider: s.tts_provider || 'edge',
         tts_edge_voice: s.tts_edge_voice || 'he-IL-HilaNeural',
@@ -435,9 +442,17 @@ export default function ClinicSettings() {
           <section className="settings-block">
             <h2 className="settings-block__title">הדפסת תור בקיוסק</h2>
             <p className="settings-hint settings-hint--top">
-              אחרי בחירת קופת חולים — הדפסה אוטומטית למדפסת ברירת המחדל. על Render: הריצו{' '}
-              <code dir="ltr">npm run kiosk:agent</code> במחשב הקיוסק (Windows).
+              אחרי בחירת קופת חולים — הדפסה אוטומטית למדפסת ברירת מחדל. על Render: קיצור{' '}
+              <strong>MedQueue Kiosk</strong> במחשב Windows.
             </p>
+            <h3 className="settings-block__subtitle">פורמט הדפסה (מחשב קיוסק)</h3>
+            <ChoiceCards
+              name="kiosk_print_format"
+              value={form.kiosk_print_format}
+              options={KIOSK_PRINT_FORMAT}
+              onChange={(v) => setForm({ ...form, kiosk_print_format: v })}
+            />
+            <h3 className="settings-block__subtitle">איך שולחים להדפסה</h3>
             <ChoiceCards
               name="kiosk_print_via"
               value={form.kiosk_print_via}
