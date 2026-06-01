@@ -530,8 +530,7 @@ export function createTicket({
 
 export function createKioskTicket({ phone, id_number, health_fund }) {
   const normalizedId = validateIsraeliId(id_number);
-  const normalizedPhone =
-    phone != null && String(phone).trim() !== '' ? validateMobilePhone(phone) : null;
+  const normalizedPhone = validateMobilePhone(phone);
   const fund = String(health_fund || '').trim();
   if (!fund) throw new Error('יש לבחור קופת חולים');
   if (!HEALTH_FUNDS.includes(fund)) throw new Error('קופת חולים לא תקינה');

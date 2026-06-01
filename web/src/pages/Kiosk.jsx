@@ -6,22 +6,16 @@ import OnScreenKeyboard from '../components/OnScreenKeyboard';
 
 import KioskHealthFundPicker from '../components/KioskHealthFundPicker';
 
-import { validateIdDigits } from '../lib/israeliValidators';
+import { validateIdDigits, validateMobilePhoneDigits } from '../lib/israeliValidators';
 
 const DONE_SCREEN_SECONDS = 8;
-
-function formatIdDisplay(digits) {
-  const d = digits.slice(0, 9);
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return `${d.slice(0, 3)}-${d.slice(3)}`;
-  return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
-}
 
 export default function Kiosk() {
   const [settings, setSettings] = useState({});
   const [receptionRoom, setReceptionRoom] = useState(null);
   const [step, setStep] = useState('id');
   const [idDigits, setIdDigits] = useState('');
+  const [phoneDigits, setPhoneDigits] = useState('');
   const [healthFund, setHealthFund] = useState('');
   const [healthFunds, setHealthFunds] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -37,21 +31,33 @@ export default function Kiosk() {
     });
   }, []);
 
-  const idDisplay = formatIdDisplay(idDigits);
-
   const goNext = () => {
-    const idCheck = validateIdDigits(idDigits);
-    if (!idCheck.ok) {
-      setError(idCheck.error);
+    setError('');
+
+    if (step === 'id') {
+      const idCheck = validateIdDigits(idDigits);
+      if (!idCheck.ok) {
+        setError(idCheck.error);
+        return;
+      }
+      setStep('phone');
       return;
     }
-    setError('');
-    setStep('fund');
+
+    if (step === 'phone') {
+      const phoneCheck = validateMobilePhoneDigits(phoneDigits);
+      if (!phoneCheck.ok) {
+        setError(phoneCheck.error);
+        return;
+      }
+      setStep('fund');
+    }
   };
 
   const goBack = () => {
     setError('');
-    if (step === 'fund') setStep('id');
+    if (step === 'fund') setStep('phone');
+    else if (step === 'phone') setStep('id');
   };
 
   const submitTicket = useCallback(
@@ -71,6 +77,13 @@ export default function Kiosk() {
         return;
       }
 
+      const phoneCheck = validateMobilePhoneDigits(phoneDigits);
+      if (!phoneCheck.ok) {
+        setError(phoneCheck.error);
+        setStep('phone');
+        return;
+      }
+
       submittingRef.current = true;
       setLoading(true);
       setError('');
@@ -79,6 +92,7 @@ export default function Kiosk() {
       try {
         const created = await api.createKioskTicket({
           id_number: idCheck.normalized,
+          phone: phoneCheck.normalized,
           health_fund: fund,
         });
         setTicket(created);
@@ -90,7 +104,7 @@ export default function Kiosk() {
         submittingRef.current = false;
       }
     },
-    [healthFund, idDigits]
+    [healthFund, idDigits, phoneDigits]
   );
 
   const handleFundSelect = (name) => {
@@ -101,6 +115,7 @@ export default function Kiosk() {
   const reset = useCallback(() => {
     setStep('id');
     setIdDigits('');
+    setPhoneDigits('');
     setHealthFund('');
     setTicket(null);
     setError('');
@@ -113,6 +128,7 @@ export default function Kiosk() {
   }, [step, ticket, reset]);
 
   const clinicName = settings.clinic_name || 'מוקד רפואי';
+  const showFormActions = step === 'id' || step === 'phone';
 
   return (
     <div className="kiosk-page kiosk-touch">
@@ -127,12 +143,27 @@ export default function Kiosk() {
             <h2 className="kiosk-page__step-title">נא להכניס תעודת זהות</h2>
             <OnScreenKeyboard
               value={idDigits}
-              displayText={idDisplay}
+              displayText={idDigits}
               onChange={(v) => {
                 setIdDigits(v.replace(/\D/g, '').slice(0, 9));
                 setError('');
               }}
               maxLength={9}
+            />
+          </section>
+        )}
+
+        {step === 'phone' && (
+          <section className="kiosk-page__form">
+            <h2 className="kiosk-page__step-title">נא להכניס מספר טלפון נייד</h2>
+            <OnScreenKeyboard
+              value={phoneDigits}
+              displayText={phoneDigits}
+              onChange={(v) => {
+                setPhoneDigits(v.replace(/\D/g, '').slice(0, 10));
+                setError('');
+              }}
+              maxLength={10}
             />
           </section>
         )}
@@ -159,10 +190,15 @@ export default function Kiosk() {
           </section>
         )}
 
-        {step === 'id' && (
+        {showFormActions && (
           <>
             {error && <p className="kiosk-page__error">{error}</p>}
             <div className="kiosk-page__actions">
+              {step === 'phone' && (
+                <button type="button" className="btn-ghost kiosk-page__back" onClick={goBack} disabled={loading}>
+                  חזרה
+                </button>
+              )}
               <button
                 type="button"
                 className="btn-primary kiosk-page__next"
