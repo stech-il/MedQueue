@@ -281,11 +281,7 @@ export default function Kiosk() {
               value={phoneDigits}
               displayText={phoneDisplay}
               valid={phoneDigits.length > 0 ? phoneCheck.ok : null}
-              hint={
-                !phoneCheck.ok && phoneDigits.length > 0
-                  ? phoneCheck.error
-                  : '10 ספרות, מתחיל ב-05'
-              }
+              hint={!phoneCheck.ok && phoneDigits.length > 0 ? phoneCheck.error : ''}
               onChange={(v) => {
                 setPhoneDigits(v.replace(/\D/g, '').slice(0, 10));
                 setError('');
@@ -309,9 +305,7 @@ export default function Kiosk() {
               value={idDigits}
               displayText={idDisplay}
               valid={idDigits.length > 0 ? idCheck.ok : null}
-              hint={
-                !idCheck.ok && idDigits.length > 0 ? idCheck.error : '9 ספרות כולל ספרת ביקורת'
-              }
+              hint={!idCheck.ok && idDigits.length > 0 ? idCheck.error : ''}
               onChange={(v) => {
                 setIdDigits(v.replace(/\D/g, '').slice(0, 9));
                 setError('');

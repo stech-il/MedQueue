@@ -236,7 +236,7 @@ export function validatePhone(phone) {
 export function validateMobilePhone(phone) {
   const n = normalizePhone(phone);
   if (!/^05\d{8}$/.test(n)) {
-    throw new Error('מספר טלפון נייד לא תקין (10 ספרות, מתחיל ב-05)');
+    throw new Error('מספר טלפון נייד לא תקין');
   }
   return n;
 }
@@ -244,7 +244,7 @@ export function validateMobilePhone(phone) {
 export function validateIsraeliId(id) {
   let s = String(id).replace(/\D/g, '');
   if (s.length === 8) s = '0' + s;
-  if (!/^\d{9}$/.test(s)) throw new Error('תעודת זהות חייבת להכיל 9 ספרות');
+  if (!/^\d{9}$/.test(s)) throw new Error('תעודת זהות לא תקינה');
   let sum = 0;
   for (let i = 0; i < 9; i++) {
     let inc = Number(s[i]) * ((i % 2) + 1);

@@ -21,10 +21,10 @@ export function validateMobilePhoneDigits(digits) {
   const n = normalizePhoneDigits(digits);
   if (!n) return { ok: false, error: 'יש להזין מספר טלפון נייד' };
   if (n.length < 10) {
-    return { ok: false, error: 'יש להשלים 10 ספרות', incomplete: true };
+    return { ok: false, error: 'מספר לא מלא', incomplete: true };
   }
   if (!/^05\d{8}$/.test(n)) {
-    return { ok: false, error: 'מספר נייד לא תקין — חייב להתחיל ב-05 ולהכיל 10 ספרות' };
+    return { ok: false, error: 'מספר נייד לא תקין' };
   }
   return { ok: true, normalized: n };
 }
@@ -49,13 +49,13 @@ export function validateIdDigits(digits) {
   let s = normalizeIdDigits(digits);
   if (!s) return { ok: false, error: 'יש להזין תעודת זהות' };
   if (s.length < 9) {
-    return { ok: false, error: 'יש להשלים 9 ספרות', incomplete: true };
+    return { ok: false, error: 'מספר לא מלא', incomplete: true };
   }
   if (!/^\d{9}$/.test(s)) {
-    return { ok: false, error: 'תעודת זהות חייבת להכיל 9 ספרות' };
+    return { ok: false, error: 'תעודת זהות לא תקינה' };
   }
   if (!idChecksumValid(s)) {
-    return { ok: false, error: 'תעודת זהות לא תקינה — בדקו את המספר' };
+    return { ok: false, error: 'תעודת זהות לא תקינה' };
   }
   return { ok: true, normalized: s };
 }
