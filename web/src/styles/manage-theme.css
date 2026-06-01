@@ -1,0 +1,362 @@
+/* ——— ניהול: מצב יום (ברירת מחדל) / מצב לילה ——— */
+
+.manage-app {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.manage-app[data-manage-theme='dark'] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #334155;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --manage-sidebar-bg: #1e293b;
+  --manage-sidebar-border: #334155;
+  --manage-nav-color: #cbd5e1;
+  --manage-nav-active-bg: #334155;
+  --manage-nav-active-color: #fff;
+  --manage-brand-color: inherit;
+  --manage-ext-color: #64748b;
+  --manage-logout-border: #475569;
+  --manage-logout-color: #94a3b8;
+  --manage-credit-border: #334155;
+  --manage-theme-toggle-bg: #0f172a;
+  --manage-theme-toggle-border: #475569;
+  --manage-theme-toggle-color: #cbd5e1;
+}
+
+.manage-app[data-manage-theme='light'] {
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface2: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --manage-sidebar-bg: #ffffff;
+  --manage-sidebar-border: #e2e8f0;
+  --manage-nav-color: #475569;
+  --manage-nav-active-bg: #e0f2fe;
+  --manage-nav-active-color: #0c4a6e;
+  --manage-brand-color: #0f172a;
+  --manage-ext-color: #64748b;
+  --manage-logout-border: #cbd5e1;
+  --manage-logout-color: #475569;
+  --manage-credit-border: #e2e8f0;
+  --manage-theme-toggle-bg: #f8fafc;
+  --manage-theme-toggle-border: #cbd5e1;
+  --manage-theme-toggle-color: #334155;
+}
+
+.manage-app__sidebar {
+  width: 240px;
+  background: var(--manage-sidebar-bg);
+  padding: 1.25rem;
+  border-left: 1px solid var(--manage-sidebar-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.manage-app__brand {
+  font-weight: 800;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--manage-brand-color);
+}
+
+.manage-app__user {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+
+.manage-app__role {
+  display: block;
+  color: var(--manage-ext-color);
+  font-size: 0.75rem;
+}
+
+.manage-app__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.manage-app__link {
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  color: var(--manage-nav-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.manage-app__link--active {
+  background: var(--manage-nav-active-bg);
+  color: var(--manage-nav-active-color);
+}
+
+.manage-app__external {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.manage-app__ext-link {
+  color: var(--manage-ext-color);
+  font-size: 0.85rem;
+}
+
+.manage-app__theme-toggle {
+  margin-top: 0.75rem;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--manage-theme-toggle-border);
+  background: var(--manage-theme-toggle-bg);
+  color: var(--manage-theme-toggle-color);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.manage-app__theme-toggle:hover {
+  filter: brightness(0.97);
+}
+
+.manage-app__logout {
+  margin-top: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--manage-logout-border);
+  color: var(--manage-logout-color);
+  padding: 0.5rem;
+  border-radius: 8px;
+  width: 100%;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.manage-app__main {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  overflow: auto;
+}
+
+.manage-app .manage-credit {
+  border-top-color: var(--manage-credit-border);
+}
+
+/* טבלאות ודוחות */
+.manage-app[data-manage-theme='light'] .report-table th {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.manage-app[data-manage-theme='light'] .report-table th,
+.manage-app[data-manage-theme='light'] .report-table td {
+  border-bottom-color: #e2e8f0;
+}
+
+.manage-app[data-manage-theme='light'] .report-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.manage-app[data-manage-theme='light'] .users-manage__sub,
+.manage-app[data-manage-theme='light'] .users-manage__field,
+.manage-app[data-manage-theme='light'] .sys-status__sub,
+.manage-app[data-manage-theme='light'] .sys-status__detail {
+  color: var(--muted);
+}
+
+.manage-app[data-manage-theme='light'] .users-manage__sub code {
+  color: #334155;
+}
+
+.manage-app[data-manage-theme='light'] .users-manage__table-wrap {
+  border-color: var(--surface2);
+}
+
+.manage-app[data-manage-theme='light'] .stations-page__title {
+  color: var(--text);
+}
+
+.manage-app[data-manage-theme='light'] .station-tile {
+  border-color: var(--surface2);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.manage-app[data-manage-theme='light'] .station-tile:hover {
+  border-color: #94a3b8;
+}
+
+.manage-app[data-manage-theme='light'] .station-tile__name {
+  color: var(--text);
+}
+
+.manage-app[data-manage-theme='light'] .station-tile__num {
+  color: var(--muted);
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__list-item--on {
+  background: #e0f2fe;
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__block--queue {
+  background: #f8fafc;
+  border-color: var(--surface2);
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__block--queue .rooms-manage__section-title {
+  color: var(--muted);
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__mode-btn {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__mode-btn--on {
+  background: #e0f2fe;
+  border-color: var(--primary);
+  color: #0c4a6e;
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__chip {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.manage-app[data-manage-theme='light'] .rooms-manage__hint {
+  color: var(--muted);
+}
+
+.manage-app[data-manage-theme='light'] .settings-page__title,
+.manage-app[data-manage-theme='light'] .settings-block__title {
+  color: var(--text);
+}
+
+.manage-app[data-manage-theme='light'] .settings-page__sub,
+.manage-app[data-manage-theme='light'] .settings-field label,
+.manage-app[data-manage-theme='light'] .settings-field__label,
+.manage-app[data-manage-theme='light'] .settings-hint,
+.manage-app[data-manage-theme='light'] .settings-choice__desc {
+  color: var(--muted);
+}
+
+.manage-app[data-manage-theme='light'] .settings-tabs {
+  background: #fff;
+  border-color: var(--surface2);
+}
+
+.manage-app[data-manage-theme='light'] .settings-tabs__btn {
+  color: var(--muted);
+}
+
+.manage-app[data-manage-theme='light'] .settings-tabs__btn:hover {
+  background: #f1f5f9;
+  color: var(--text);
+}
+
+.manage-app[data-manage-theme='light'] .settings-block {
+  border-color: var(--surface2);
+}
+
+.manage-app[data-manage-theme='light'] .settings-field input:not([type='checkbox']):not([type='radio']):not([type='range']),
+.manage-app[data-manage-theme='light'] .settings-field select,
+.manage-app[data-manage-theme='light'] .settings-field textarea {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: var(--text);
+}
+
+.manage-app[data-manage-theme='light'] .settings-choice {
+  background: #f8fafc;
+  border-color: var(--surface2);
+}
+
+.manage-app[data-manage-theme='light'] .settings-choice:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.manage-app[data-manage-theme='light'] .settings-choice--on {
+  background: #e0f2fe;
+}
+
+.manage-app[data-manage-theme='light'] .settings-choice__title {
+  color: var(--text);
+}
+
+.manage-app[data-manage-theme='light'] .settings-logo,
+.manage-app[data-manage-theme='light'] .settings-hint code {
+  background: #f8fafc;
+  border-color: var(--surface2);
+}
+
+.manage-app[data-manage-theme='light'] .settings-page__footer {
+  background: linear-gradient(180deg, transparent, var(--bg) 24%);
+  border-top-color: var(--surface2);
+}
+
+.manage-app[data-manage-theme='light'] .settings-block__subtitle,
+.manage-app[data-manage-theme='light'] .settings-check {
+  color: #334155;
+}
+
+.manage-app[data-manage-theme='light'] .pw-modal-backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.manage-app[data-manage-theme='light'] .status-waiting {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.manage-app[data-manage-theme='light'] .status-called {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.manage-app[data-manage-theme='light'] .status-serving {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.manage-app[data-manage-theme='light'] .status-completed {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* התחברות — לפי העדפת ניהול */
+.login-page--light {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface2: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  background: linear-gradient(160deg, #e0f2fe, #f8fafc) !important;
+}
+
+.login-page--light .card {
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+}
+
+.login-page--light .login-page__sub {
+  color: #64748b;
+}
+
+.login-page--light .login-page__home {
+  color: #64748b;
+}

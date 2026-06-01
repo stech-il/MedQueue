@@ -52,8 +52,8 @@ export default function Dashboard() {
 function Stat({ label, value, color }) {
   return (
     <div className="card" style={statCard}>
-      <div style={{ fontSize: '2rem', fontWeight: 800, color: color || '#f1f5f9' }}>{value}</div>
-      <div style={{ color: '#94a3b8', marginTop: '0.25rem' }}>{label}</div>
+      <div style={{ fontSize: '2rem', fontWeight: 800, color: color || 'var(--text)' }}>{value}</div>
+      <div style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>{label}</div>
     </div>
   );
 }
@@ -73,5 +73,5 @@ const grid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(14
 const statCard = { textAlign: 'center', padding: '1.25rem' };
 const roomGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' };
 const roomCard = { padding: '1rem' };
-const meta = { color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.35rem' };
+const meta = { color: 'var(--muted)', fontSize: '0.85rem', marginTop: '0.35rem' };
 const currentStyle = { marginTop: '0.5rem', fontWeight: 600 };

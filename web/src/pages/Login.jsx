@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getManageThemePreference } from '../context/ManageThemeContext';
+import '../styles/manage-theme.css';
 
 export default function Login() {
   const { login } = useAuth();
@@ -28,11 +30,16 @@ export default function Login() {
     }
   };
 
+  const loginTheme = getManageThemePreference();
+
   return (
-    <div style={styles.page}>
+    <div
+      className={loginTheme === 'light' ? 'login-page login-page--light' : 'login-page'}
+      style={styles.page}
+    >
       <form className="card" style={styles.form} onSubmit={submit}>
         <h1 style={styles.title}>התחברות</h1>
-        <p style={styles.sub}>ניהול מערכת התורים — מורשים בלבד</p>
+        <p className="login-page__sub" style={styles.sub}>ניהול מערכת התורים — מורשים בלבד</p>
         <label style={styles.label}>שם משתמש</label>
         <input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
         <label style={styles.label}>סיסמה</label>
@@ -41,7 +48,7 @@ export default function Login() {
         <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={loading}>
           {loading ? 'מתחבר...' : 'כניסה'}
         </button>
-        <Link to="/" style={styles.home}>
+        <Link to="/" className="login-page__home" style={styles.home}>
           חזרה לדף הבית
         </Link>
       </form>

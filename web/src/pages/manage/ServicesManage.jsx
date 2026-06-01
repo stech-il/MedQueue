@@ -44,29 +44,28 @@ export default function ServicesManage() {
           הוסף
         </button>
       </div>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ background: '#1e293b' }}>
-            <th style={th}>שם</th>
-            <th style={th}>קידומת</th>
-            <th style={th}>חדר</th>
-            <th style={th}>פעיל</th>
-          </tr>
-        </thead>
-        <tbody>
-          {services.map((s) => (
-            <tr key={s.id}>
-              <td style={td}>{s.name}</td>
-              <td style={td}>{s.prefix}</td>
-              <td style={td}>{s.room_name || '—'}</td>
-              <td style={td}>{s.is_active ? 'כן' : 'לא'}</td>
+      <div style={{ overflow: 'auto', borderRadius: 10, border: '1px solid var(--surface2)' }}>
+        <table className="report-table">
+          <thead>
+            <tr>
+              <th>שם</th>
+              <th>קידומת</th>
+              <th>חדר</th>
+              <th>פעיל</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {services.map((s) => (
+              <tr key={s.id}>
+                <td>{s.name}</td>
+                <td>{s.prefix}</td>
+                <td>{s.room_name || '—'}</td>
+                <td>{s.is_active ? 'כן' : 'לא'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
-
-const th = { padding: '0.65rem', textAlign: 'right' };
-const td = { padding: '0.65rem', borderTop: '1px solid #334155' };

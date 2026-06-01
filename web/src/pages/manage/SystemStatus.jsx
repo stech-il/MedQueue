@@ -61,7 +61,7 @@ export default function SystemStatus() {
     }
   };
 
-  if (!data) return <p style={{ color: '#94a3b8' }}>טוען סטטוס…</p>;
+  if (!data) return <p style={{ color: 'var(--muted)' }}>טוען סטטוס…</p>;
 
   return (
     <div className="sys-status">

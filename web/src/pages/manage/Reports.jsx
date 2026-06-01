@@ -385,9 +385,9 @@ export default function Reports() {
 function Stat({ label, value, color, subtitle }) {
   return (
     <div className="card" style={statCard}>
-      <div style={{ fontSize: '1.65rem', fontWeight: 800, color: color || '#f1f5f9' }}>{value}</div>
-      <div style={{ color: '#94a3b8', marginTop: '0.25rem', fontSize: '0.85rem' }}>{label}</div>
-      {subtitle && <div style={{ color: '#64748b', fontSize: '0.7rem' }}>{subtitle}</div>}
+      <div style={{ fontSize: '1.65rem', fontWeight: 800, color: color || 'var(--text)' }}>{value}</div>
+      <div style={{ color: 'var(--muted)', marginTop: '0.25rem', fontSize: '0.85rem' }}>{label}</div>
+      {subtitle && <div style={{ color: 'var(--muted)', fontSize: '0.7rem', opacity: 0.85 }}>{subtitle}</div>}
     </div>
   );
 }
@@ -412,7 +412,7 @@ function statusPill(st) {
 }
 
 const h1 = { fontSize: '1.75rem', marginBottom: '0.35rem' };
-const sub = { color: '#94a3b8', marginBottom: '1.25rem' };
+const sub = { color: 'var(--muted)', marginBottom: '1.25rem' };
 const h2 = { fontSize: '1.15rem', margin: '1.5rem 0 0.65rem' };
 const grid = {
   display: 'grid',
@@ -426,30 +426,31 @@ const filtersRow = {
   gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
   gap: '0.75rem',
 };
-const flbl = { display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: '#94a3b8' };
+const flbl = { display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--muted)' };
 const btnRow = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' };
 const secBtn = {
-  background: '#334155',
-  color: '#e2e8f0',
+  background: 'var(--surface2)',
+  color: 'var(--text)',
   border: 'none',
   padding: '0.6rem 1rem',
   borderRadius: 10,
   fontWeight: 600,
   cursor: 'pointer',
 };
-const periodLbl = { marginTop: '0.75rem', fontSize: '0.9rem', color: '#64748b' };
-const tableWrap = { overflow: 'auto', borderRadius: 10, border: '1px solid #334155' };
-const empty = { textAlign: 'center', padding: '1.5rem', color: '#64748b' };
-const muted = { color: '#64748b', fontSize: '0.85rem' };
+const periodLbl = { marginTop: '0.75rem', fontSize: '0.9rem', color: 'var(--muted)' };
+const tableWrap = { overflow: 'auto', borderRadius: 10, border: '1px solid var(--surface2)' };
+const empty = { textAlign: 'center', padding: '1.5rem', color: 'var(--muted)' };
+const muted = { color: 'var(--muted)', fontSize: '0.85rem' };
 const hourBar = {
   display: 'flex',
   gap: 4,
   alignItems: 'flex-end',
   padding: '1rem',
-  background: '#1e293b',
+  background: 'var(--surface)',
+  border: '1px solid var(--surface2)',
   borderRadius: 10,
   overflowX: 'auto',
 };
 const hourCell = { display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 28 };
 const hourFill = { width: 20, background: '#0ea5e9', borderRadius: 4 };
-const hourLbl = { fontSize: '0.65rem', color: '#64748b', marginTop: 4 };
+const hourLbl = { fontSize: '0.65rem', color: 'var(--muted)', marginTop: 4 };
