@@ -27,8 +27,9 @@ const EDGE_RATES = [
 ];
 
 const KIOSK_PRINT_FORMAT = [
-  { value: 'text', title: 'טקסט (מומלץ)', desc: 'בלי PDF — עברית בסדר נכון, דרך Windows' },
-  { value: 'pdf', title: 'PDF', desc: 'גיבוי — אם טקסט לא יוצא טוב' },
+  { value: 'html', title: 'כרטיס מעוצב (מומלץ)', desc: 'כמו במסך — מסגרות, מספר גדול, עברית נכונה' },
+  { value: 'text', title: 'טקסט פשוט', desc: 'קבלה בסיסית כמו סופרמרקט' },
+  { value: 'pdf', title: 'PDF', desc: 'גיבוי' },
 ];
 
 const KIOSK_PRINT = [
@@ -58,7 +59,7 @@ const EMPTY_FORM = {
   ticker_messages: '',
   ticker_size: 'md',
   kiosk_print_via: 'auto',
-  kiosk_print_format: 'text',
+  kiosk_print_format: 'html',
   kiosk_printer_name: '',
   tts_provider: 'edge',
   tts_edge_voice: 'he-IL-HilaNeural',
@@ -121,7 +122,7 @@ export default function ClinicSettings() {
         ticker_messages: s.ticker_messages || '',
         ticker_size: s.ticker_size || 'md',
         kiosk_print_via: s.kiosk_print_via || 'auto',
-        kiosk_print_format: s.kiosk_print_format || 'text',
+        kiosk_print_format: s.kiosk_print_format || 'html',
         kiosk_printer_name: s.kiosk_printer_name || '',
         tts_provider: s.tts_provider || 'edge',
         tts_edge_voice: s.tts_edge_voice || 'he-IL-HilaNeural',

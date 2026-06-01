@@ -1,10 +1,10 @@
+import { printKioskTicketHtml } from './kioskPrintHtml.js';
 import { printKioskTicketPdf } from './kioskPrintPdf.js';
 import { printKioskTicketText } from './kioskPrintText.js';
 
 /**
  * הדפסת כרטיס תור למדפסת ברירת מחדל (Windows).
- * ברירת מחדל: טקסט UTF-8 (בלי PDF, עברית בסדר נכון).
- * הגדרה: kiosk_print_format = text | pdf
+ * html — כרטיס מעוצב (ברירת מחדל), text — פשוט, pdf — גיבוי
  */
 export async function printKioskTicket(ticket, settings, receptionRoom) {
   if (process.platform !== 'win32') {
@@ -14,17 +14,24 @@ export async function printKioskTicket(ticket, settings, receptionRoom) {
   const mode =
     settings?.kiosk_print_format?.trim() ||
     process.env.KIOSK_PRINT_FORMAT?.trim() ||
-    'text';
+    'html';
 
   if (mode === 'pdf') {
     return printKioskTicketPdf(ticket, settings, receptionRoom);
   }
+  if (mode === 'text') {
+    return printKioskTicketText(ticket, settings, receptionRoom);
+  }
 
   try {
-    return await printKioskTicketText(ticket, settings, receptionRoom);
+    return await printKioskTicketHtml(ticket, settings, receptionRoom);
   } catch (e) {
-    if (mode === 'text') throw e;
-    console.warn('Text print failed, PDF fallback:', e.message);
-    return printKioskTicketPdf(ticket, settings, receptionRoom);
+    console.warn('HTML print failed, text fallback:', e.message);
+    try {
+      return await printKioskTicketText(ticket, settings, receptionRoom);
+    } catch (e2) {
+      console.warn('Text print failed, PDF fallback:', e2.message);
+      return printKioskTicketPdf(ticket, settings, receptionRoom);
+    }
   }
 }

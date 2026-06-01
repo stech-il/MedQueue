@@ -23,7 +23,12 @@ export function buildTicketReceiptData(ticket, settings, receptionRoom) {
     healthFund: ticket?.health_fund || '',
     roomName,
     dateTime: now.toLocaleString('he-IL'),
-    dateLabel: now.toLocaleDateString('he-IL'),
+    dateLabel: now.toLocaleDateString('he-IL', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }),
     timeLabel: now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
     ticketNumber: ticket?.ticket_number != null ? String(ticket.ticket_number) : '',
   };
