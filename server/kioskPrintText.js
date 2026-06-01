@@ -28,17 +28,7 @@ function sep() {
 
 /** כרטיס תור כטקסט — סדר עברי רגיל (בלי PDF, בלי היפוך BiDi) */
 export function buildTextReceipt(r) {
-  const blocks = [
-    '',
-    centerLine(r.clinic),
-    centerLine('כרטיס תור'),
-    '',
-    sep(),
-    centerLine('מספר תור'),
-    centerLine(r.displayCode),
-    '',
-    sep(),
-  ];
+  const blocks = ['', centerLine('מספר תור'), centerLine(r.displayCode), '', sep()];
 
   const addField = (label, value) => {
     if (!value) return;
@@ -48,14 +38,8 @@ export function buildTextReceipt(r) {
   addField('קופת חולים', r.healthFund);
   addField('טלפון נייד', r.phone);
   addField('תעודת זהות', r.idNumber);
-  addField('שירות', r.serviceName);
-  addField('מספר פנימי', r.ticketNumber);
 
   blocks.push(
-    sep(),
-    centerLine('נא לגשת ל'),
-    centerLine(r.roomName),
-    '',
     sep(),
     centerLine(r.dateLabel),
     centerLine(r.timeLabel),

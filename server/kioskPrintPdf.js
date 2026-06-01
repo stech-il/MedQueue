@@ -44,13 +44,6 @@ export async function printKioskTicketPdf(ticket, settings, receptionRoom) {
     doc.pipe(stream);
     doc.font(fontPath);
 
-    doc.fontSize(15).fillColor('#000');
-    pdfText(doc, r.clinic, { align: 'center', width: w });
-    doc.fontSize(9).fillColor('#666');
-    pdfText(doc, 'כרטיס תור', { align: 'center', width: w });
-    doc.moveDown(0.35);
-    pdfDashedLine(doc);
-
     doc.fontSize(10).fillColor('#444');
     pdfText(doc, 'מספר תור', { align: 'center', width: w });
     doc.moveDown(0.1);
@@ -62,15 +55,7 @@ export async function printKioskTicketPdf(ticket, settings, receptionRoom) {
     pdfReceiptRow(doc, 'קופת חולים', r.healthFund, fontPath);
     pdfReceiptRow(doc, 'טלפון נייד', r.phone, fontPath);
     pdfReceiptRow(doc, 'תעודת זהות', r.idNumber, fontPath);
-    pdfReceiptRow(doc, 'שירות', r.serviceName, fontPath);
-    if (r.ticketNumber) pdfReceiptRow(doc, 'מספר פנימי', r.ticketNumber, fontPath);
 
-    pdfDashedLine(doc);
-    doc.fontSize(11).fillColor('#333');
-    pdfText(doc, 'נא לגשת ל', { align: 'center', width: w });
-    doc.fontSize(18).fillColor('#000');
-    pdfText(doc, r.roomName, { align: 'center', width: w });
-    doc.moveDown(0.35);
     pdfDashedLine(doc);
 
     doc.fontSize(9).fillColor('#555');

@@ -213,10 +213,14 @@ function fieldHtml(label, value) {
 export function buildTicketReceiptHtml(ticket, settings, receptionRoom) {
   const r = buildTicketReceiptData(ticket, settings, receptionRoom);
   const logoUrl = absLogoUrl(settings?.clinic_logo);
-  const logoBlock =
-    logoUrl && !logoUrl.endsWith('/logo.svg')
-      ? `<div class="receipt__logo-wrap"><img class="receipt__logo" src="${esc(logoUrl)}" alt="" /></div>`
-      : '';
+  const hasLogo = logoUrl && !logoUrl.endsWith('/logo.svg');
+
+  const headerBlock = hasLogo
+    ? `<div class="receipt__logo-wrap"><img class="receipt__logo" src="${esc(logoUrl)}" alt="" /></div>`
+    : `<header class="receipt__top receipt__top--fallback">
+        <h1 class="receipt__clinic">${esc(r.clinic)}</h1>
+        <span class="receipt__badge">כרטיס תור</span>
+      </header>`;
 
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -228,11 +232,7 @@ export function buildTicketReceiptHtml(ticket, settings, receptionRoom) {
 </head>
 <body>
   <div class="receipt">
-    ${logoBlock}
-    <header class="receipt__top">
-      <h1 class="receipt__clinic">${esc(r.clinic)}</h1>
-      <span class="receipt__badge">כרטיס תור</span>
-    </header>
+    ${headerBlock}
     <div class="receipt__body">
       <section class="receipt__ticket-box">
         <p class="receipt__ticket-label">מספר התור שלך</p>
@@ -242,14 +242,7 @@ export function buildTicketReceiptHtml(ticket, settings, receptionRoom) {
         ${fieldHtml('קופת חולים', r.healthFund)}
         ${fieldHtml('טלפון נייד', r.phone)}
         ${fieldHtml('תעודת זהות', r.idNumber)}
-        ${fieldHtml('שירות', r.serviceName)}
-        ${fieldHtml('מספר פנימי', r.ticketNumber)}
       </div>
-      <div class="receipt__divider"></div>
-      <section class="receipt__dest">
-        <p class="receipt__dest-label">נא לגשת ל</p>
-        <p class="receipt__dest-room">${esc(r.roomName)}</p>
-      </section>
       <footer class="receipt__footer">
         <p class="receipt__date">
           ${esc(r.dateLabel)}

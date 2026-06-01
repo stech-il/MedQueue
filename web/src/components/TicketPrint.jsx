@@ -42,9 +42,14 @@ export default function TicketPrint({ ticket, settings, receptionRoom, onPrintFa
     <div className="print-area">
       <article className="print-ticket" dir="rtl">
         <header className="print-ticket__header">
-          {logoOk && <img src={r.logo} alt="" className="print-ticket__logo" />}
-          <h1 className="print-ticket__clinic">{r.clinic}</h1>
-          <p className="print-ticket__subtitle">כרטיס תור</p>
+          {logoOk ? (
+            <img src={r.logo} alt="" className="print-ticket__logo" />
+          ) : (
+            <>
+              <h1 className="print-ticket__clinic">{r.clinic}</h1>
+              <p className="print-ticket__subtitle">כרטיס תור</p>
+            </>
+          )}
         </header>
 
         <section className="print-ticket__hero" aria-label="מספר תור">
@@ -58,15 +63,6 @@ export default function TicketPrint({ ticket, settings, receptionRoom, onPrintFa
           <ReceiptRow label="קופת חולים" value={r.healthFund} />
           <ReceiptRow label="טלפון נייד" value={r.phone} />
           <ReceiptRow label="תעודת זהות" value={r.idNumber} />
-          <ReceiptRow label="שירות" value={r.serviceName} />
-          {r.ticketNumber && <ReceiptRow label="מספר פנימי" value={r.ticketNumber} />}
-        </section>
-
-        <div className="print-ticket__rule" role="presentation" />
-
-        <section className="print-ticket__dest">
-          <p className="print-ticket__dest-label">נא לגשת ל</p>
-          <p className="print-ticket__dest-room">{r.roomName}</p>
         </section>
 
         <div className="print-ticket__rule print-ticket__rule--thin" role="presentation" />
