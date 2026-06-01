@@ -12,7 +12,7 @@ if (-not $ProjectRoot) {
 if (-not $BaseUrl) {
   $urlFile = Join-Path $PSScriptRoot 'medqueue-kiosk.url.txt'
   if (Test-Path $urlFile) {
-    $BaseUrl = (Get-Content $urlFile -Raw).Trim()
+    $BaseUrl = (Get-Content $urlFile -Raw -Encoding UTF8).Trim()
   } else {
     $BaseUrl = 'https://medqueue-6ivj.onrender.com'
   }
@@ -44,43 +44,43 @@ function New-Shortcut {
   $sc.Save()
 }
 
-# קיצור 1: הפעלה מלאה (סוכן + Chrome) — ללא ארגומנטים, עובד גם בתיקייה עם רווחים
-$lnkFull = Join-Path $desktop 'MedQueue קיוסק.lnk'
+$lnkFull = Join-Path $desktop 'MedQueue Kiosk.lnk'
 New-Shortcut -Path $lnkFull `
   -Target $launcherBat `
   -Arguments '' `
   -WorkingDir $PSScriptRoot `
-  -Description "MedQueue קיוסק + הדפסה — $kioskUrl"
+  -Description "MedQueue Kiosk + print agent - $kioskUrl"
 
-# קיצור 2: Chrome ישירות לכתובת הקיוסק (גיבוי)
-$chrome = "${env:ProgramFiles}\Google\Chrome\Application\chrome.exe"
+$chrome = Join-Path ${env:ProgramFiles} 'Google\Chrome\Application\chrome.exe'
 if (-not (Test-Path $chrome)) {
-  $chrome = "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe"
+  $chrome = Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe'
 }
-if (Test-Path $chrome) {
+
+$chromeOk = Test-Path $chrome
+if ($chromeOk) {
   $profile = Join-Path $env:LOCALAPPDATA 'MedQueueKioskChrome'
-  $chromeArgs = @(
+  $chromeArgs = (
     '--kiosk',
     '--kiosk-printing',
     '--disable-print-preview',
     '--no-first-run',
-    "--user-data-dir=`"$profile`"",
-    "`"$kioskUrl`""
+    ('--user-data-dir=' + [char]34 + $profile + [char]34),
+    ($kioskUrl)
   ) -join ' '
 
-  $lnkChrome = Join-Path $desktop 'MedQueue קיוסק (Chrome).lnk'
+  $lnkChrome = Join-Path $desktop 'MedQueue Kiosk Chrome.lnk'
   New-Shortcut -Path $lnkChrome `
     -Target $chrome `
     -Arguments $chromeArgs `
     -WorkingDir $ProjectRoot `
-    -Description "MedQueue קיוסק — $kioskUrl"
+    -Description "MedQueue Kiosk Chrome - $kioskUrl"
 }
 
-Write-Host ""
-Write-Host "נוצרו קיצורים על שולחן העבודה:"
-Write-Host "  MedQueue קיוסק.lnk          — סוכן הדפסה + Chrome (מומלץ)"
-if (Test-Path $chrome) {
-  Write-Host "  MedQueue קיוסק (Chrome).lnk — רק דפדפן"
+Write-Host ''
+Write-Host 'Desktop shortcuts created:'
+Write-Host '  MedQueue Kiosk.lnk         (print agent + Chrome, recommended)'
+if ($chromeOk) {
+  Write-Host '  MedQueue Kiosk Chrome.lnk  (Chrome only)'
 }
-Write-Host ""
-Write-Host "כתובת: $kioskUrl"
+Write-Host ''
+Write-Host "URL: $kioskUrl"

@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0create-kiosk-desktop-s
 
 echo [3/3] סיום.
 echo.
-echo  מעכשיו: לחץ כפול על "MedQueue קיוסק" בשולחן העבודה.
+echo  מעכשיו: לחץ כפול על "MedQueue Kiosk" בשולחן העבודה.
 echo  אל תפתח את הקיוסק מסמל Chrome הרגיל.
 echo.
 pause
