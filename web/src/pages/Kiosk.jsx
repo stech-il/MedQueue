@@ -186,7 +186,7 @@ export default function Kiosk() {
           <section className="kiosk-page__done" aria-live="polite">
             <p className="kiosk-page__done-label">מספר התור שלך</p>
             <div className="kiosk-page__big-code">{ticket.display_code}</div>
-            <p className="kiosk-page__done-hint">המתן להקריאת התור על המסך</p>
+            <p className="kiosk-page__done-hint">אנא המתן להקראת תורך</p>
           </section>
         )}
 
