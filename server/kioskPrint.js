@@ -6,7 +6,9 @@ import pdfPrinter from 'pdf-to-printer';
 import {
   buildTicketReceiptData,
   pdfDashedLine,
+  pdfLtrCenter,
   pdfReceiptRow,
+  pdfRtlCenter,
 } from './ticketReceiptLayout.js';
 
 const { print } = pdfPrinter;
@@ -45,15 +47,19 @@ export async function printKioskTicket(ticket, settings, receptionRoom) {
     doc.pipe(stream);
     doc.font(fontPath);
 
-    doc.fontSize(15).fillColor('#000').text(r.clinic, { align: 'center' });
-    doc.fontSize(9).fillColor('#666').text('כרטיס תור', { align: 'center' });
+    doc.fontSize(15).fillColor('#000');
+    pdfRtlCenter(doc, r.clinic);
+    doc.fontSize(9).fillColor('#666');
+    pdfRtlCenter(doc, 'כרטיס תור');
     doc.moveDown(0.35);
 
     pdfDashedLine(doc);
 
-    doc.fontSize(10).fillColor('#444').text('מספר תור', { align: 'center' });
+    doc.fontSize(10).fillColor('#444');
+    pdfRtlCenter(doc, 'מספר תור');
     doc.moveDown(0.1);
-    doc.fontSize(44).fillColor('#000').text(r.displayCode, { align: 'center' });
+    doc.fontSize(44).fillColor('#000');
+    pdfLtrCenter(doc, r.displayCode);
     doc.moveDown(0.4);
 
     pdfDashedLine(doc);
@@ -66,18 +72,23 @@ export async function printKioskTicket(ticket, settings, receptionRoom) {
 
     pdfDashedLine(doc);
 
-    doc.fontSize(11).fillColor('#333').text('נא לגשת ל', { align: 'center' });
-    doc.fontSize(18).fillColor('#000').text(r.roomName, { align: 'center' });
+    doc.fontSize(11).fillColor('#333');
+    pdfRtlCenter(doc, 'נא לגשת ל');
+    doc.fontSize(18).fillColor('#000');
+    pdfRtlCenter(doc, r.roomName);
     doc.moveDown(0.35);
 
     pdfDashedLine(doc);
 
-    doc.fontSize(9).fillColor('#555').text(r.dateLabel, { align: 'center' });
-    doc.fontSize(11).fillColor('#000').text(r.timeLabel, { align: 'center' });
+    doc.fontSize(9).fillColor('#555');
+    pdfLtrCenter(doc, r.dateLabel);
+    doc.fontSize(11).fillColor('#000');
+    pdfLtrCenter(doc, r.timeLabel);
     doc.moveDown(0.25);
-    doc.fontSize(9).fillColor('#666').text('המתן להקריאת מספר התור על המסך', { align: 'center' });
-    doc.fontSize(8).text('שמור על כרטיס זה עד סיום הטיפול', { align: 'center' });
-
+    doc.fontSize(9).fillColor('#666');
+    pdfRtlCenter(doc, 'המתן להקריאת מספר התור על המסך');
+    doc.fontSize(8);
+    pdfRtlCenter(doc, 'שמור על כרטיס זה עד סיום הטיפול');
     doc.end();
     stream.on('finish', resolve);
     stream.on('error', reject);

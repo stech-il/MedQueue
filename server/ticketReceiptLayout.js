@@ -1,7 +1,8 @@
+import { visualLtr, visualRtl } from './rtlText.js';
+
 /** עיצוב כרטיס תור להדפסת PDF (80mm) — תואם ל-web */
 
-export function formatReceiptPhone(phone) {
-  const d = String(phone || '').replace(/\D/g, '');
+export function formatReceiptPhone(phone) {  const d = String(phone || '').replace(/\D/g, '');
   if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
   return phone || '';
 }
@@ -30,16 +31,31 @@ export function buildTicketReceiptData(ticket, settings, receptionRoom) {
   };
 }
 
-/** מצייר שורת פרטים ב-PDF */
+/** מצייר שורת פרטים ב-PDF (תווית + ערך, סדר עברי נכון) */
 export function pdfReceiptRow(doc, label, value, fontPath) {
   if (!value) return;
-  doc.font(fontPath).fontSize(11).fillColor('#000000').text(`${label}:  ${value}`, {
+  const w = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const val = String(value);
+  const ltrOnly = /^[\d\s+\-().:]+$/.test(val.replace(/-/g, ''));
+
+  doc.font(fontPath).fontSize(10).fillColor('#555555').text(visualRtl(label), {
     align: 'right',
-    width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
+    width: w,
   });
-  doc.moveDown(0.12);
+  doc
+    .fontSize(13)
+    .fillColor('#000000')
+    .text(ltrOnly ? visualLtr(val) : visualRtl(val), { align: 'right', width: w });
+  doc.moveDown(0.18);
 }
 
+export function pdfRtlCenter(doc, text, opts = {}) {
+  doc.text(visualRtl(text), { align: 'center', ...opts });
+}
+
+export function pdfLtrCenter(doc, text, opts = {}) {
+  doc.text(visualLtr(text), { align: 'center', ...opts });
+}
 export function pdfDashedLine(doc) {
   const x0 = doc.page.margins.left;
   const x1 = doc.page.width - doc.page.margins.right;

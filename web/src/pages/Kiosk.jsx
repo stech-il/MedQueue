@@ -9,7 +9,6 @@ import OnScreenKeyboard from '../components/OnScreenKeyboard';
 import KioskHealthFundPicker from '../components/KioskHealthFundPicker';
 
 import { validatePhoneDigits, validateIdDigits } from '../lib/israeliValidators';
-import { isLocalPrintServerUp } from '../lib/printTicket';
 
 
 
@@ -72,13 +71,7 @@ export default function Kiosk() {
   const [error, setError] = useState('');
 
   const [printNote, setPrintNote] = useState('');
-  const [printSetupHint, setPrintSetupHint] = useState(false);
-
   const submittingRef = useRef(false);
-
-  useEffect(() => {
-    isLocalPrintServerUp().then((up) => setPrintSetupHint(!up));
-  }, []);
 
   useEffect(() => {
     api.getKioskConfig().then((cfg) => {
@@ -302,17 +295,6 @@ export default function Kiosk() {
 
       </header>
 
-      {printSetupHint && (
-        <div className="kiosk-page__print-setup" role="alert">
-          <strong>שרת ההדפסה המקומי לא פעיל</strong>
-          <p>סגרו הכל ופתחו מהקיצור <strong>MedQueue Kiosk</strong> בשולחן העבודה.</p>
-          <p>חייב להישאר פתוח חלון שחור עם הטקסט:</p>
-          <p dir="ltr" className="kiosk-page__print-setup-cmd">
-            MedQueue local print → http://127.0.0.1:39123
-          </p>
-        </div>
-      )}
-
       <main className="kiosk-page__main">
 
         {step === 'phone' && (
@@ -508,8 +490,7 @@ export default function Kiosk() {
         settings={settings}
         receptionRoom={receptionRoom}
         onPrintFailed={(msg) => {
-          setPrintSetupHint(true);
-          setPrintNote(msg || 'הדפסה נכשלה — הפעילו MedQueue Kiosk מהקיצור');
+          setPrintNote(msg || 'הדפסה נכשלה — ודאו שחלון MedQueue Local Print פתוח');
         }}
       />
 
