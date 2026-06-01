@@ -26,12 +26,12 @@ export async function printKioskTicket(ticket, settings, receptionRoom) {
   try {
     return await printKioskTicketHtml(ticket, settings, receptionRoom);
   } catch (e) {
-    console.warn('HTML print failed, text fallback:', e.message);
-    try {
-      return await printKioskTicketText(ticket, settings, receptionRoom);
-    } catch (e2) {
-      console.warn('Text print failed, PDF fallback:', e2.message);
-      return printKioskTicketPdf(ticket, settings, receptionRoom);
+    console.warn('Styled print failed:', e.message);
+    if (mode === 'html') {
+      throw new Error(
+        `${e.message} — ודא ש-Chrome מותקן והרץ: npm install --prefix server`
+      );
     }
+    return printKioskTicketPdf(ticket, settings, receptionRoom);
   }
 }

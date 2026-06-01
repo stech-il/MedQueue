@@ -179,6 +179,7 @@ for (const [key, value] of Object.entries(defaultSettings)) {
 
 db.prepare("UPDATE users SET room_ids = NULL WHERE room_ids IS NOT NULL AND room_ids != ''").run();
 db.prepare("UPDATE settings SET value = 'both' WHERE key = 'tts_playback' AND value = 'server'").run();
+db.prepare("UPDATE settings SET value = 'html' WHERE key = 'kiosk_print_format' AND value IN ('text', 'pdf')").run();
 
 ensureKioskService();
 
