@@ -1,0 +1,26 @@
+{
+  "name": "medqueue",
+  "version": "1.0.0",
+  "private": true,
+  "description": "מערכת ניהול תורים לבית רופאים",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "predev": "node scripts/free-ports.mjs",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:web\"",
+    "kill-ports": "node scripts/free-ports.mjs",
+    "dev:server": "npm run dev --prefix server",
+    "dev:web": "npm run dev --prefix web",
+    "build": "npm run build --prefix web",
+    "start": "npm run start --prefix server",
+    "start:local": "npm run kill-ports && npm run build && npm run start --prefix server",
+    "start:server": "npm run start --prefix server",
+    "setup": "npm install --prefix server && npm install --prefix web",
+    "install:all": "npm install && npm run setup",
+    "render:build": "npm install --prefix server && npm install --prefix web --include=dev && npm run build --prefix web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -1,0 +1,22 @@
+# Render Blueprint — MedQueue
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: medqueue
+    runtime: node
+    plan: starter
+    region: frankfurt
+    buildCommand: npm run render:build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: JWT_SECRET
+        generateValue: true
+    disk:
+      name: medqueue-data
+      mountPath: /var/data
+      sizeGB: 1

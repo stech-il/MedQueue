@@ -1,0 +1,604 @@
+import { useEffect, useState } from 'react';
+import { api } from '../../api';
+import {
+  listBrowserHebrewVoices,
+  playDoctorSummonChime,
+  preloadVoices,
+  setAnnounceSettings,
+  speakText,
+} from '../../lib/announce';
+import { getTickerBarStyle, TICKER_SIZE_OPTIONS } from '../../lib/tickerSize';
+import DisplayCenterSettings from '../../components/DisplayCenterSettings';
+import { DISPLAY_TEMPLATES } from '../../lib/displayTemplate';
+
+const TABS = [
+  { id: 'general', label: 'כללי', icon: '🏥' },
+  { id: 'display', label: 'מסך תצוגה', icon: '📺' },
+  { id: 'kiosk', label: 'קיוסק', icon: '🎫' },
+  { id: 'tts', label: 'הקראה', icon: '🔊' },
+  { id: 'backup', label: 'גיבוי', icon: '💾' },
+];
+
+const EDGE_RATES = [
+  { value: '-15%', label: 'איטי (ברור)' },
+  { value: '-5%', label: 'מעט איטי' },
+  { value: '+0%', label: 'רגיל' },
+  { value: '+10%', label: 'מהיר' },
+];
+
+const KIOSK_PRINT = [
+  { value: 'server', title: 'מהשרת', desc: 'ללא חלון הדפסה · Windows + מדפסת ברירת מחדל' },
+  { value: 'browser', title: 'מהדפדפן', desc: 'Chrome עם --kiosk-printing להדפסה שקטה' },
+];
+
+const TTS_PLAYBACK = [
+  { value: 'server', title: 'מחשב השרת', desc: 'רמקולים על מחשב השרת' },
+  { value: 'browser', title: 'מסך תצוגה', desc: 'רמקולי הטלוויזיה / דפדפן' },
+  { value: 'both', title: 'שניהם', desc: 'מומלץ — תצוגה + שרת' },
+];
+
+const TTS_PROVIDER = [
+  { value: 'edge', title: 'Microsoft Neural', desc: 'קול עברי מקצועי (מומלץ)' },
+  { value: 'browser', title: 'קול הדפדפן', desc: 'קול מותקן במחשב' },
+];
+
+const EMPTY_FORM = {
+  clinic_name: '',
+  clinic_logo: '',
+  ticker_messages: '',
+  ticker_size: 'md',
+  kiosk_print_via: 'server',
+  kiosk_printer_name: '',
+  tts_provider: 'edge',
+  tts_edge_voice: 'he-IL-HilaNeural',
+  tts_edge_rate: '-5%',
+  tts_voice_uri: '',
+  tts_rate: '0.68',
+  display_flash_seconds: '12',
+  display_summon_seconds: '10',
+    display_tagline: '',
+    display_template: 'board',
+    display_center_mode: 'default',
+  display_center_slides: '[]',
+  display_center_image: '',
+  display_center_video: '',
+  display_center_slide_seconds: '8',
+  tts_playback: 'both',
+  backup_auto_daily: '1',
+};
+
+function ChoiceCards({ name, value, options, onChange }) {
+  return (
+    <div className="settings-choices">
+      {options.map((opt) => (
+        <label
+          key={opt.value}
+          className={`settings-choice${value === opt.value ? ' settings-choice--on' : ''}`}
+        >
+          <input type="radio" name={name} value={opt.value} checked={value === opt.value} onChange={() => onChange(opt.value)} />
+          <span className="settings-choice__title">{opt.title}</span>
+          {opt.desc && <span className="settings-choice__desc">{opt.desc}</span>}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+export default function ClinicSettings() {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [tab, setTab] = useState('general');
+  const [msg, setMsg] = useState('');
+  const [msgType, setMsgType] = useState('ok');
+  const [edgeVoices, setEdgeVoices] = useState([]);
+  const [browserVoices, setBrowserVoices] = useState([]);
+  const [testing, setTesting] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const notify = (text, type = 'ok') => {
+    setMsg(text);
+    setMsgType(type);
+    setTimeout(() => setMsg(''), 2800);
+  };
+
+  useEffect(() => {
+    api.getSettings().then((s) => {
+      setForm({
+        ...EMPTY_FORM,
+        clinic_name: s.clinic_name || '',
+        clinic_logo: s.clinic_logo || '/logo.svg',
+        ticker_messages: s.ticker_messages || '',
+        ticker_size: s.ticker_size || 'md',
+        kiosk_print_via: s.kiosk_print_via || 'server',
+        kiosk_printer_name: s.kiosk_printer_name || '',
+        tts_provider: s.tts_provider || 'edge',
+        tts_edge_voice: s.tts_edge_voice || 'he-IL-HilaNeural',
+        tts_edge_rate: s.tts_edge_rate || '-5%',
+        tts_voice_uri: s.tts_voice_uri || '',
+        tts_rate: s.tts_rate || '0.68',
+        display_flash_seconds: s.display_flash_seconds || '12',
+        display_summon_seconds: s.display_summon_seconds || '10',
+        display_tagline: s.display_tagline || '',
+        display_template: s.display_template || 'board',
+        display_center_mode: s.display_center_mode || 'default',
+        display_center_slides: s.display_center_slides || '[]',
+        display_center_image: s.display_center_image || '',
+        display_center_video: s.display_center_video || '',
+        display_center_slide_seconds: s.display_center_slide_seconds || '8',
+        tts_playback: s.tts_playback || 'both',
+        backup_auto_daily: s.backup_auto_daily ?? '1',
+      });
+      setAnnounceSettings(s);
+    });
+    api.getTtsVoices().then((v) => setEdgeVoices(v.edge || [])).catch(() => {});
+    preloadVoices().then(() => setBrowserVoices(listBrowserHebrewVoices()));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.updateSettings(form);
+      setAnnounceSettings(form);
+      notify('הגדרות נשמרו בהצלחה');
+    } catch (e) {
+      notify(e.message, 'err');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const testTts = async () => {
+    setTesting(true);
+    setAnnounceSettings(form);
+    try {
+      await speakText('בדיקת הקראה. רופא, נא לגשת לחדר מספר אחת');
+      notify('הושמעה בדיקת הקראה');
+    } catch (e) {
+      notify(e.message, 'err');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const onLogoFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      notify('הקובץ גדול מדי (מקסימום 2MB)', 'err');
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
+        reader.readAsDataURL(file);
+      });
+      const res = await api.uploadLogo(dataUrl);
+      setForm((f) => ({ ...f, clinic_logo: res.clinic_logo }));
+      notify('הלוגו הועלה');
+    } catch (err) {
+      notify(err.message, 'err');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  return (
+    <div className="settings-page">
+      <header className="settings-page__header">
+        <div>
+          <h1 className="settings-page__title">הגדרות מרפאה</h1>
+          <p className="settings-page__sub">ניהול שם, תצוגה, קיוסק, הקראה וגיבוי</p>
+        </div>
+        <button type="button" className="btn-primary settings-page__save-top" onClick={save} disabled={saving}>
+          {saving ? 'שומר…' : 'שמור הגדרות'}
+        </button>
+      </header>
+
+      {msg && (
+        <div className={`settings-toast settings-toast--${msgType}`} role="status">
+          {msg}
+        </div>
+      )}
+
+      <nav className="settings-tabs" aria-label="קטגוריות הגדרות">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={`settings-tabs__btn${tab === t.id ? ' settings-tabs__btn--on' : ''}`}
+            onClick={() => setTab(t.id)}
+          >
+            <span className="settings-tabs__icon" aria-hidden>
+              {t.icon}
+            </span>
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="settings-panel">
+        {tab === 'general' && (
+          <div className="settings-sections">
+            <section className="settings-block">
+              <h2 className="settings-block__title">פרטי המוקד</h2>
+              <div className="settings-field">
+                <label htmlFor="clinic_name">שם המוקד</label>
+                <input
+                  id="clinic_name"
+                  value={form.clinic_name}
+                  onChange={(e) => setForm({ ...form, clinic_name: e.target.value })}
+                  placeholder="בית הרופאים"
+                />
+                <p className="settings-hint">מוצג במסך תצוגה, קיוסק וכרטיסי תור</p>
+              </div>
+
+              <div className="settings-field">
+                <span className="settings-field__label">לוגו</span>
+                <div className="settings-logo">
+                  {form.clinic_logo ? (
+                    <img src={form.clinic_logo} alt="" className="settings-logo__img" />
+                  ) : (
+                    <div className="settings-logo__empty">אין לוגו</div>
+                  )}
+                  <div className="settings-logo__actions">
+                    <label className="btn-primary settings-logo__upload">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        onChange={onLogoFile}
+                        disabled={uploadingLogo}
+                        hidden
+                      />
+                      {uploadingLogo ? 'מעלה…' : 'העלה קובץ'}
+                    </label>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={async () => {
+                        try {
+                          const res = await api.removeLogo();
+                          setForm((f) => ({ ...f, clinic_logo: res.clinic_logo }));
+                          notify('לוגו אופס');
+                        } catch (err) {
+                          notify(err.message, 'err');
+                        }
+                      }}
+                    >
+                      ברירת מחדל
+                    </button>
+                  </div>
+                </div>
+                <p className="settings-hint">PNG, JPG, WebP, SVG — עד 2MB</p>
+              </div>
+
+              <div className="settings-field">
+                <label htmlFor="clinic_logo_url">או כתובת URL</label>
+                <input
+                  id="clinic_logo_url"
+                  value={form.clinic_logo}
+                  onChange={(e) => setForm({ ...form, clinic_logo: e.target.value })}
+                  dir="ltr"
+                  placeholder="https://..."
+                />
+              </div>
+            </section>
+
+            <section className="settings-block">
+              <h2 className="settings-block__title">הודעות רצות (פס תחתון)</h2>
+              <div className="settings-field">
+                <label htmlFor="ticker_messages">תוכן ההודעות</label>
+                <textarea
+                  id="ticker_messages"
+                  rows={5}
+                  value={form.ticker_messages}
+                  onChange={(e) => setForm({ ...form, ticker_messages: e.target.value })}
+                  placeholder="הודעה ראשונה|הודעה שנייה"
+                />
+                <p className="settings-hint">
+                  הפרדה בין הודעות: <code>|</code> · שורות: Enter · מודגש: <code>**טקסט**</code>
+                </p>
+              </div>
+              <div className="settings-field settings-field--narrow">
+                <label htmlFor="ticker_size">גודל הפס</label>
+                <select
+                  id="ticker_size"
+                  value={form.ticker_size}
+                  onChange={(e) => setForm({ ...form, ticker_size: e.target.value })}
+                >
+                  {TICKER_SIZE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label} ({opt.fontPx}px)
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div
+                className="ticker-bar settings-ticker-preview"
+                style={getTickerBarStyle(form.ticker_size)}
+                aria-hidden
+              >
+                <div className="ticker-viewport">
+                  <span className="ticker-msg" style={{ padding: '0 1rem' }}>
+                    תצוגה מקדימה
+                  </span>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {tab === 'display' && (
+          <div className="settings-sections">
+            <section className="settings-block">
+              <h2 className="settings-block__title">תבנית מסך תצוגה</h2>
+              <p className="settings-hint settings-hint--top">בחר מראה ל־/display (לובי). נשמר לאחר «שמור הגדרות».</p>
+              <div className="settings-choices">
+                {DISPLAY_TEMPLATES.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className={`settings-choice${form.display_template === opt.value ? ' settings-choice--on' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="display_template"
+                      checked={(form.display_template || 'board') === opt.value}
+                      onChange={() => setForm({ ...form, display_template: opt.value })}
+                    />
+                    <span className="settings-choice__title">{opt.title}</span>
+                    <span className="settings-choice__desc">{opt.desc}</span>
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            {form.display_template !== 'classic' && (
+            <section className="settings-block">
+              <h2 className="settings-block__title">מרכז המסך</h2>
+              <p className="settings-hint settings-hint--top">תוכן במסגרת האמצעית — תבנית «לוח מלא» בלבד</p>
+              <DisplayCenterSettings form={form} setForm={setForm} />
+            </section>
+            )}
+
+            <section className="settings-block">
+              <h2 className="settings-block__title">טקסט וזמני הבזק</h2>
+              <div className="settings-field">
+                <label htmlFor="display_tagline">טקסט במרכז (מצב ברירת מחדל)</label>
+                <input
+                  id="display_tagline"
+                  value={form.display_tagline}
+                  onChange={(e) => setForm({ ...form, display_tagline: e.target.value })}
+                  placeholder="ברוכים הבאים למוקד הרפואי"
+                  disabled={form.display_template === 'classic'}
+                />
+                {form.display_template === 'classic' && (
+                  <p className="settings-hint">בתבנית «רשת כרטיסים» אין אזור מרכזי — השדה לא מוצג</p>
+                )}
+              </div>
+              <div className="settings-grid-2">
+                <div className="settings-field">
+                  <label htmlFor="display_flash_seconds">קריאת תור — שניות</label>
+                  <input
+                    id="display_flash_seconds"
+                    type="number"
+                    min={3}
+                    max={120}
+                    value={form.display_flash_seconds}
+                    onChange={(e) => setForm({ ...form, display_flash_seconds: e.target.value })}
+                  />
+                </div>
+                <div className="settings-field">
+                  <label htmlFor="display_summon_seconds">קריאה לרופא — שניות</label>
+                  <input
+                    id="display_summon_seconds"
+                    type="number"
+                    min={3}
+                    max={120}
+                    value={form.display_summon_seconds}
+                    onChange={(e) => setForm({ ...form, display_summon_seconds: e.target.value })}
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                className="settings-btn-secondary"
+                disabled={testing}
+                onClick={async () => {
+                  setTesting(true);
+                  setAnnounceSettings(form);
+                  try {
+                    await playDoctorSummonChime();
+                    await speakText('רופא, נא לגשת לחדר מספר אחת');
+                    notify('הושמע צליל + הקראה לדוגמה');
+                  } catch (e) {
+                    notify(e.message, 'err');
+                  } finally {
+                    setTesting(false);
+                  }
+                }}
+              >
+                {testing ? 'משמיע…' : 'בדיקת צליל לרופא'}
+              </button>
+            </section>
+          </div>
+        )}
+
+        {tab === 'kiosk' && (
+          <section className="settings-block">
+            <h2 className="settings-block__title">הדפסת תור בקיוסק</h2>
+            <p className="settings-hint settings-hint--top">
+              אחרי בחירת קופת חולים — התור נוצר והדפסה אוטומטית
+            </p>
+            <ChoiceCards
+              name="kiosk_print_via"
+              value={form.kiosk_print_via}
+              options={KIOSK_PRINT}
+              onChange={(v) => setForm({ ...form, kiosk_print_via: v })}
+            />
+            {form.kiosk_print_via === 'server' && (
+              <div className="settings-field">
+                <label htmlFor="kiosk_printer_name">שם מדפסת (ריק = ברירת מחדל)</label>
+                <input
+                  id="kiosk_printer_name"
+                  value={form.kiosk_printer_name}
+                  onChange={(e) => setForm({ ...form, kiosk_printer_name: e.target.value })}
+                  placeholder="HP Smart Tank 610 series"
+                  dir="ltr"
+                />
+              </div>
+            )}
+          </section>
+        )}
+
+        {tab === 'tts' && (
+          <section className="settings-block">
+            <h2 className="settings-block__title">הקראה קולית</h2>
+            <p className="settings-hint settings-hint--top">קריאות תור ורופא במסך התצוגה</p>
+
+            <h3 className="settings-block__subtitle">מאיפה משמיעים?</h3>
+            <ChoiceCards
+              name="tts_playback"
+              value={form.tts_playback}
+              options={TTS_PLAYBACK}
+              onChange={(v) => setForm({ ...form, tts_playback: v })}
+            />
+
+            <h3 className="settings-block__subtitle">סוג הקול</h3>
+            <ChoiceCards
+              name="tts_provider"
+              value={form.tts_provider}
+              options={TTS_PROVIDER}
+              onChange={(v) => setForm({ ...form, tts_provider: v })}
+            />
+
+            {form.tts_provider === 'edge' && (
+              <div className="settings-grid-2">
+                <div className="settings-field">
+                  <label htmlFor="tts_edge_voice">קול</label>
+                  <select
+                    id="tts_edge_voice"
+                    value={form.tts_edge_voice}
+                    onChange={(e) => setForm({ ...form, tts_edge_voice: e.target.value })}
+                  >
+                    {(edgeVoices.length
+                      ? edgeVoices
+                      : [
+                          { id: 'he-IL-HilaNeural', label: 'הילה (נשי)' },
+                          { id: 'he-IL-AvriNeural', label: 'אברי (גברי)' },
+                        ]
+                    ).map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.label || v.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="settings-field">
+                  <label htmlFor="tts_edge_rate">מהירות</label>
+                  <select
+                    id="tts_edge_rate"
+                    value={form.tts_edge_rate}
+                    onChange={(e) => setForm({ ...form, tts_edge_rate: e.target.value })}
+                  >
+                    {EDGE_RATES.map((r) => (
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {form.tts_provider === 'browser' && (
+              <>
+                <div className="settings-field">
+                  <label htmlFor="tts_voice_uri">
+                    קול בדפדפן
+                    <button
+                      type="button"
+                      className="settings-link"
+                      onClick={async () => {
+                        await preloadVoices();
+                        setBrowserVoices(listBrowserHebrewVoices());
+                      }}
+                    >
+                      רענן
+                    </button>
+                  </label>
+                  {browserVoices.length === 0 ? (
+                    <p className="settings-warn">לא נמצא קול עברית — התקן ב-Windows: שפה → עברית → דיבור</p>
+                  ) : (
+                    <select
+                      id="tts_voice_uri"
+                      value={form.tts_voice_uri}
+                      onChange={(e) => setForm({ ...form, tts_voice_uri: e.target.value })}
+                    >
+                      <option value="">אוטומטי</option>
+                      {browserVoices.map((v) => (
+                        <option key={v.uri} value={v.uri}>
+                          {v.name} ({v.lang})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <div className="settings-field">
+                  <label htmlFor="tts_rate">מהירות ({form.tts_rate})</label>
+                  <input
+                    id="tts_rate"
+                    type="range"
+                    min="0.5"
+                    max="1"
+                    step="0.02"
+                    value={form.tts_rate}
+                    onChange={(e) => setForm({ ...form, tts_rate: e.target.value })}
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="settings-actions-inline">
+              <button type="button" className="btn-primary" onClick={testTts} disabled={testing}>
+                {testing ? 'משמיע…' : 'בדיקת הקראה'}
+              </button>
+            </div>
+          </section>
+        )}
+
+        {tab === 'backup' && (
+          <section className="settings-block">
+            <h2 className="settings-block__title">גיבוי נתונים</h2>
+            <p className="settings-hint settings-hint--top">
+              גיבוי יומי אוטומטי (14 יום). גיבוי ידני ב«סטטוס מערכת».
+            </p>
+            <label className="settings-check">
+              <input
+                type="checkbox"
+                checked={form.backup_auto_daily === '1'}
+                onChange={(e) =>
+                  setForm({ ...form, backup_auto_daily: e.target.checked ? '1' : '0' })
+                }
+              />
+              <span>גיבוי אוטומטי פעם ביום (בהפעלת השרת)</span>
+            </label>
+          </section>
+        )}
+      </div>
+
+      <footer className="settings-page__footer">
+        <button type="button" className="btn-primary" onClick={save} disabled={saving}>
+          {saving ? 'שומר…' : 'שמור הגדרות'}
+        </button>
+        {tab === 'tts' && (
+          <button type="button" className="btn-ghost" onClick={testTts} disabled={testing}>
+            בדיקת הקראה
+          </button>
+        )}
+      </footer>
+    </div>
+  );
+}
