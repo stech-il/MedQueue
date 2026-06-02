@@ -9,6 +9,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const API_BASE = process.env.RAPID_ONE_BASE || 'https://yzm.rapid-image.net';
 const API_USERNAME = process.env.RAPID_ONE_USERNAME || 'admin';
 const API_PASSWORD = process.env.RAPID_ONE_PASSWORD || 'Boss2020';
+const STATIC_TOKEN = process.env.RAPID_ONE_ACCESS_TOKEN || '';
 
 const TOKEN_CACHE_PATH = join(DATA_DIR, 'rapidOne-token.json');
 const RAPID_CONFIG_PATH = process.env.RAPID_ONE_CONFIG_FILE || join(process.cwd(), 'RapidPDFImporter.Service.exe.Config');
@@ -146,8 +147,14 @@ async function createNewToken() {
 }
 
 async function getApiToken() {
+  // 0) Manual static token override (for locked account cases)
+  if (String(STATIC_TOKEN || '').trim()) {
+    return String(STATIC_TOKEN).trim();
+  }
+
   // 1) Try local Rapid config file (same as PHP)
   const cfg = parseRapidConfigToken(RAPID_CONFIG_PATH);
+  const staleFallback = cfg?.token || readTokenCache()?.token || null;
   if (cfg?.token && cfg.expiresAt && cfg.expiresAt > Date.now()) return cfg.token;
   if (cfg?.token && !cfg.expiresAt) return cfg.token;
 
@@ -157,9 +164,15 @@ async function getApiToken() {
   if (cached?.token && !cached?.expiresAt) return cached.token;
 
   // 3) Fetch new
-  const fresh = await createNewToken();
-  writeTokenCache(fresh);
-  return fresh.token;
+  try {
+    const fresh = await createNewToken();
+    writeTokenCache(fresh);
+    return fresh.token;
+  } catch (e) {
+    // Same spirit as your PHP fallback: if account/token endpoint fails, try cached token
+    if (staleFallback) return staleFallback;
+    throw e;
+  }
 }
 
 async function findPatientWorking(idNumber) {
