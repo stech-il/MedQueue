@@ -379,9 +379,13 @@ export default function ClinicSettings() {
             </section>
 
             <section className="settings-block">
-              <h2 className="settings-block__title">חיבור Rapid One (קיוסק)</h2>
+              <h2 className="settings-block__title">עדכון מטופלים בקישור חיצוני (קיוסק)</h2>
               <p className="settings-hint settings-hint--top">
-                בעת יצירת תור בקיוסק, המערכת תנסה לעדכן טלפון וקופת חולים ב-Rapid One. כשל בחיבור לא אמור להפיל הנפקת תור.
+                בעת יצירת תור בקיוסק, המערכת תשלח עדכון דרך ה-URL החיצוני:
+                <code>
+                  {' '}
+                  /api.php?api_key=...&action=update&id_number=...&phone=...&health_org=...
+                </code>
               </p>
 
               <label className="settings-check">
@@ -394,7 +398,10 @@ export default function ClinicSettings() {
               </label>
 
               <p className="settings-hint" style={{ marginTop: '0.75rem' }}>
-                פרטי Rapid One מוגדרים בשרת דרך משתני סביבה. לדוגמה: <code>RAPID_ONE_USERNAME</code>, <code>RAPID_ONE_PASSWORD</code>, <code>RAPID_ONE_BASE</code>.
+                ניתן לשנות את כתובת היעד/מפתח דרך משתני סביבה:
+                <code> EXTERNAL_PATIENT_UPDATE_BASE </code>
+                ו-
+                <code> EXTERNAL_PATIENT_UPDATE_API_KEY </code>.
               </p>
 
               <div className="settings-actions-inline">

@@ -5,7 +5,7 @@ function isReceptionRoom(room) {
 }
 
 export function getRoomAnnounceText(room) {
-  if (isReceptionRoom(room)) return 'חדר קבלה';
+  if (isReceptionRoom(room)) return 'עמדת קבלה';
   const n = room?.room_number?.trim();
   if (n) return `חדר מספר ${n}`;
   return room?.name || 'החדר';

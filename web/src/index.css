@@ -2484,6 +2484,24 @@ select:focus {
   margin-bottom: 1rem;
 }
 
+.rooms-manage__group-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.rooms-manage__group-pick .rooms-manage__mode-btn {
+  flex: 0 1 auto;
+  min-width: fit-content;
+}
+
+.rooms-manage__hint--muted {
+  margin-top: 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .rooms-manage__mode-btn {
   flex: 1;
   padding: 0.6rem 1rem;

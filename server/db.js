@@ -1,7 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { ensureDataDirs, DB_PATH } from './paths.js';
 import {
-  updateRapidOnePatientFromKiosk,
   updatePatientViaExternalApiPhp,
 } from './rapidOnePatientUpdate.js';
 
@@ -398,15 +397,25 @@ export function setRoomSharedLinks(roomId, sharedGroup, linkedRoomIds = []) {
   if (!room) throw new Error('חדר לא נמצא');
 
   const group = sharedGroup?.trim() || null;
-  updateRoom(roomId, { shared_group: group });
-
   if (!group) {
+    updateRoom(roomId, { shared_group: null });
     return getRoom(roomId);
   }
 
-  const ids = new Set([roomId, ...linkedRoomIds.map(Number)]);
-  for (const id of ids) {
-    if (id === roomId) continue;
+  const memberIds = new Set([Number(roomId), ...linkedRoomIds.map(Number)]);
+
+  // חדרים שהיו בקבוצה הזו אבל הוסרו מהקישור — חוזרים לתור נפרד
+  const previousMembers = db
+    .prepare('SELECT id FROM rooms WHERE shared_group = ?')
+    .all(group)
+    .map((r) => r.id);
+  for (const id of previousMembers) {
+    if (!memberIds.has(id)) {
+      updateRoom(id, { shared_group: null });
+    }
+  }
+
+  for (const id of memberIds) {
     updateRoom(id, { shared_group: group });
   }
   return getRoom(roomId);
@@ -560,12 +569,12 @@ export function createKioskTicket({ phone, id_number, health_fund }) {
     force_reception: true,
   });
 
-  // Best-effort: לא נכשיל את יצירת התור אם ה-API של Rapid One נופל.
+  // Best-effort: לא נכשיל את יצירת התור אם ה-API החיצוני נופל.
   // את סטטוס החיבור/עדכון נשמור בהגדרות לטובת מנהל.
   try {
     const settings = getSettings();
     if (settings.external_patient_update_enabled === '1') {
-      void updateRapidOnePatientFromKiosk({
+      void updatePatientViaExternalApiPhp({
         idNumber: normalizedId,
         phone: normalizedPhone,
         healthFund: fund,
@@ -578,32 +587,15 @@ export function createKioskTicket({ phone, id_number, health_fund }) {
           db.prepare("UPDATE settings SET value = '' WHERE key = 'external_patient_update_last_update_error'").run();
         })
         .catch((err) => {
-          // Fallback route: external API php endpoint with query params
-          void updatePatientViaExternalApiPhp({
-            idNumber: normalizedId,
-            phone: normalizedPhone,
-            healthFund: fund,
-          })
-            .then(() => {
-              db.prepare("UPDATE settings SET value = '1' WHERE key = 'external_patient_update_last_update_ok'").run();
-              db.prepare(
-                "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
-              ).run();
-              db.prepare("UPDATE settings SET value = '' WHERE key = 'external_patient_update_last_update_error'").run();
-            })
-            .catch((fallbackErr) => {
-              db.prepare("UPDATE settings SET value = '0' WHERE key = 'external_patient_update_last_update_ok'").run();
-              db.prepare(
-                "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
-              ).run();
-              const msg = String(
-                fallbackErr?.message || err?.message || fallbackErr || err || 'שגיאה בעדכון'
-              ).slice(0, 500);
-              db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(
-                msg,
-                'external_patient_update_last_update_error'
-              );
-            });
+          db.prepare("UPDATE settings SET value = '0' WHERE key = 'external_patient_update_last_update_ok'").run();
+          db.prepare(
+            "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
+          ).run();
+          const msg = String(err?.message || err || 'שגיאה בעדכון').slice(0, 500);
+          db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(
+            msg,
+            'external_patient_update_last_update_error'
+          );
         });
     }
   } catch (e) {

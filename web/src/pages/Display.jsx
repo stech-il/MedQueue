@@ -212,7 +212,7 @@ function FlashOverlay({ ticket, room }) {
     <div className="display-flash">
       <p className="display-flash__label">תור מספר</p>
       <div className="display-flash__code">{ticket.display_code}</div>
-      <p className="display-flash__room">נא לגשת ל{roomObj.name || 'החדר'}</p>
+      <p className="display-flash__room">נא לגשת ל{getRoomAnnounceText(roomObj)}</p>
       {badge && <p className="display-flash__room-num">{badge}</p>}
     </div>
   );

@@ -40,8 +40,19 @@ function typeLabel(value) {
   return TYPES.find((t) => t.value === value)?.label || value;
 }
 
+function suggestNewGroupName(existingNames) {
+  const used = new Set(existingNames.map((n) => n.trim()).filter(Boolean));
+  if (!used.has('קבוצה-1')) return 'קבוצה-1';
+  for (let i = 2; i < 50; i += 1) {
+    const name = `קבוצה-${i}`;
+    if (!used.has(name)) return name;
+  }
+  return `קבוצה-${Date.now()}`;
+}
+
 export default function RoomsManage() {
   const [rooms, setRooms] = useState([]);
+  const [sharedGroupNames, setSharedGroupNames] = useState([]);
   const [draft, setDraft] = useState({});
   const [selectedId, setSelectedId] = useState(null);
   const [msg, setMsg] = useState('');
@@ -62,7 +73,11 @@ export default function RoomsManage() {
     [rooms]
   );
 
-  const load = () => api.getRoomsAll().then(setRooms);
+  const load = async () => {
+    const [allRooms, groups] = await Promise.all([api.getRoomsAll(), api.getSharedGroups()]);
+    setRooms(allRooms);
+    setSharedGroupNames(groups.map((g) => g.name || g).filter(Boolean));
+  };
 
   useEffect(() => {
     load();
@@ -97,14 +112,48 @@ export default function RoomsManage() {
   };
 
   const setSharedMode = (roomId, independent) => {
-    setDraft((prev) => ({
-      ...prev,
-      [roomId]: {
-        ...prev[roomId],
-        shared_group: independent ? '' : prev[roomId].shared_group || 'קבוצה-1',
-        linkedRoomIds: independent ? [] : prev[roomId].linkedRoomIds,
-      },
-    }));
+    setDraft((prev) => {
+      const cur = prev[roomId];
+      const existing = cur.shared_group?.trim();
+      const newGroup =
+        existing ||
+        suggestNewGroupName([
+          ...sharedGroupNames,
+          ...Object.values(prev).map((x) => x.shared_group),
+        ]);
+      return {
+        ...prev,
+        [roomId]: {
+          ...cur,
+          shared_group: independent ? '' : newGroup,
+          linkedRoomIds: independent ? [] : cur.linkedRoomIds,
+        },
+      };
+    });
+  };
+
+  const pickSharedGroup = (roomId, groupName) => {
+    setDraft((prev) => {
+      const cur = prev[roomId];
+      const oldGroup = cur.shared_group?.trim();
+      const keepLinks = oldGroup && oldGroup === groupName ? cur.linkedRoomIds : [];
+      return {
+        ...prev,
+        [roomId]: {
+          ...cur,
+          shared_group: groupName,
+          linkedRoomIds: keepLinks,
+        },
+      };
+    });
+  };
+
+  const createNewSharedGroup = (roomId) => {
+    const name = suggestNewGroupName([
+      ...sharedGroupNames,
+      ...Object.values(draft).map((x) => x.shared_group),
+    ]);
+    pickSharedGroup(roomId, name);
   };
 
   const showMsg = (text, isError = false) => {
@@ -177,7 +226,17 @@ export default function RoomsManage() {
 
   const d = selectedId ? draft[selectedId] : null;
   const isShared = Boolean(d?.shared_group?.trim());
-  const others = activeRooms.filter((o) => o.id !== selectedId);
+  const currentGroup = d?.shared_group?.trim() || '';
+  const linkableOthers = activeRooms.filter((o) => {
+    if (o.id === selectedId) return false;
+    const g = (draft[o.id]?.shared_group ?? o.shared_group ?? '').trim();
+    return !g || g === currentGroup;
+  });
+  const otherGroupRooms = activeRooms.filter((o) => {
+    if (o.id === selectedId) return false;
+    const g = (draft[o.id]?.shared_group ?? o.shared_group ?? '').trim();
+    return g && g !== currentGroup;
+  });
   const partners = selectedId ? partnerNames(selectedId) : null;
 
   return (
@@ -186,7 +245,7 @@ export default function RoomsManage() {
         <div>
           <h1 className="rooms-manage__title">ניהול חדרים</h1>
           <p className="rooms-manage__sub">
-            בחר חדר מהרשימה, ערוך בצד שמאל ולחץ שמור. תור משותף — מסמנים חדרים מקושרים.
+            בחר חדר מהרשימה, ערוך בצד שמאל ולחץ שמור. תור משותף — בוחרים קבוצה נפרדת (לא בהכרח רופאים) ומקשרים רק חדרים מאותה קבוצה.
           </p>
         </div>
         <button type="button" className="btn-success" onClick={() => setShowAdd((v) => !v)}>
@@ -405,21 +464,54 @@ export default function RoomsManage() {
 
                 {isShared && (
                   <div className="rooms-manage__shared">
+                    <p className="rooms-manage__hint">בחר קבוצת תור — כל קבוצה נפרדת (רופאים, מעבדה, וכו׳)</p>
+                    <div className="rooms-manage__group-pick">
+                      <button
+                        type="button"
+                        className="rooms-manage__mode-btn"
+                        onClick={() => createNewSharedGroup(selectedId)}
+                      >
+                        + קבוצה חדשה
+                      </button>
+                      {sharedGroupNames.map((g) => (
+                        <button
+                          key={g}
+                          type="button"
+                          className={`rooms-manage__mode-btn ${currentGroup === g ? 'rooms-manage__mode-btn--on' : ''}`}
+                          onClick={() => pickSharedGroup(selectedId, g)}
+                        >
+                          {g}
+                        </button>
+                      ))}
+                    </div>
                     <label className="rooms-manage__field">
-                      <span>שם קבוצה</span>
+                      <span>שם קבוצה (ניתן לערוך)</span>
                       <input
                         value={d.shared_group}
                         dir="ltr"
-                        placeholder="doctors"
-                        onChange={(e) => patchDraft(selectedId, { shared_group: e.target.value })}
+                        placeholder="קבוצה-2"
+                        list="shared-group-suggestions"
+                        onChange={(e) =>
+                          patchDraft(selectedId, {
+                            shared_group: e.target.value,
+                            linkedRoomIds: [],
+                          })
+                        }
                       />
+                      <datalist id="shared-group-suggestions">
+                        {sharedGroupNames.map((g) => (
+                          <option key={g} value={g} />
+                        ))}
+                      </datalist>
                     </label>
-                    <p className="rooms-manage__hint">חדרים מקושרים:</p>
+                    <p className="rooms-manage__hint">
+                      חדרים לקישור בקבוצה «{currentGroup}» (רק תור נפרד או כבר בקבוצה הזו):
+                    </p>
                     <div className="rooms-manage__chips">
-                      {others.length === 0 ? (
-                        <span className="rooms-manage__hint">אין חדרים נוספים פעילים</span>
+                      {linkableOthers.length === 0 ? (
+                        <span className="rooms-manage__hint">אין חדרים זמינים לקישור</span>
                       ) : (
-                        others.map((o) => (
+                        linkableOthers.map((o) => (
                           <button
                             key={o.id}
                             type="button"
@@ -433,6 +525,17 @@ export default function RoomsManage() {
                         ))
                       )}
                     </div>
+                    {otherGroupRooms.length > 0 && (
+                      <p className="rooms-manage__hint rooms-manage__hint--muted">
+                        בקבוצות אחרות (לא ניתן לקשר מכאן):{' '}
+                        {otherGroupRooms
+                          .map((o) => {
+                            const g = (draft[o.id]?.shared_group ?? o.shared_group ?? '').trim();
+                            return `${o.name} (${g})`;
+                          })
+                          .join(' · ')}
+                      </p>
+                    )}
                     {partners?.length > 0 && (
                       <p className="rooms-manage__preview">
                         אחרי שמירה: {partners.join(' · ')}
