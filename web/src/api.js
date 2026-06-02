@@ -138,6 +138,7 @@ export const api = {
   getSystemStatus: () => request('/api/admin/system-status'),
   getBackups: () => request('/api/admin/backups'),
   createBackup: () => request('/api/admin/backup', { method: 'POST' }),
+  testExternalPatientConnection: () => request('/api/admin/external-patient/test', { method: 'POST' }),
   getActivityLog: (params = {}) => {
     const q = new URLSearchParams();
     if (params.from) q.set('from', params.from);

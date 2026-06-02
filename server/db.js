@@ -1,5 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { ensureDataDirs, DB_PATH } from './paths.js';
+import { updateExternalPatientApi } from './externalPatientUpdate.js';
 
 ensureDataDirs();
 
@@ -171,6 +172,17 @@ const defaultSettings = {
   kiosk_printer_name: '',
   tts_playback: 'both',
   backup_auto_daily: '1',
+
+  // אינטגרציה: עדכון מטופלים ב-API חיצוני בעת יצירת תור בקיוסק
+  external_patient_update_enabled: '0',
+  external_patient_update_url: '',
+  external_patient_update_api_key: '',
+  external_patient_update_last_test_ok: '0',
+  external_patient_update_last_test_at: '',
+  external_patient_update_last_test_error: '',
+  external_patient_update_last_update_ok: '0',
+  external_patient_update_last_update_at: '',
+  external_patient_update_last_update_error: '',
 };
 for (const [key, value] of Object.entries(defaultSettings)) {
   const exists = db.prepare('SELECT 1 FROM settings WHERE key = ?').get(key);
@@ -536,7 +548,7 @@ export function createKioskTicket({ phone, id_number, health_fund }) {
   if (!HEALTH_FUNDS.includes(fund)) throw new Error('קופת חולים לא תקינה');
 
   const service = getKioskService();
-  return createTicket({
+  const ticket = createTicket({
     service_id: service.id,
     patient_name: null,
     phone: normalizedPhone,
@@ -544,6 +556,68 @@ export function createKioskTicket({ phone, id_number, health_fund }) {
     health_fund: fund,
     force_reception: true,
   });
+
+  // Best-effort: לא נכשיל את יצירת התור אם ה-API החיצוני נופל.
+  // את סטטוס החיבור/עדכון נשמור בהגדרות לטובת מנהל.
+  try {
+    const settings = getSettings();
+    if (settings.external_patient_update_enabled === '1') {
+      const baseUrl = (settings.external_patient_update_url || '').trim();
+      const apiKey = (settings.external_patient_update_api_key || '').trim();
+
+      // ה-API שצירפת תומך רק בארבעת הקופות המרכזיות (לא "אחר")
+      const supportedFunds = ['מכבי', 'כללית', 'מאוחדת', 'לאומית'];
+      if (!supportedFunds.includes(fund)) {
+        // מוּדל דילוג במקום כשל — כדי שלא יהיו שגיאות כשבוחרים "אחר".
+        db.prepare(
+          "UPDATE settings SET value = '0' WHERE key = 'external_patient_update_last_update_ok'"
+        ).run();
+        db.prepare(
+          "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
+        ).run();
+        db.prepare(
+          'UPDATE settings SET value = ? WHERE key = ?'
+        ).run('דילוג — קופת חולים לא נתמכת ב-API', 'external_patient_update_last_update_error');
+      } else if (!baseUrl || !apiKey) {
+        db.prepare("UPDATE settings SET value = '0' WHERE key = 'external_patient_update_last_update_ok'").run();
+        db.prepare(
+          "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
+        ).run();
+        db.prepare(
+          'UPDATE settings SET value = ? WHERE key = ?'
+        ).run('לא מוגדר URL/ApiKey ל-API החיצוני', 'external_patient_update_last_update_error');
+      } else {
+        void updateExternalPatientApi({
+          baseUrl,
+          apiKey,
+          idNumber: normalizedId,
+          phone: normalizedPhone,
+          healthOrg: fund,
+        })
+          .then(() => {
+            db.prepare("UPDATE settings SET value = '1' WHERE key = 'external_patient_update_last_update_ok'").run();
+            db.prepare(
+              "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
+            ).run();
+            db.prepare(
+              "UPDATE settings SET value = '' WHERE key = 'external_patient_update_last_update_error'"
+            ).run();
+          })
+          .catch((err) => {
+            db.prepare("UPDATE settings SET value = '0' WHERE key = 'external_patient_update_last_update_ok'").run();
+            db.prepare(
+              "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
+            ).run();
+            const msg = String(err?.message || err || 'שגיאה בעדכון').slice(0, 500);
+            db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(msg, 'external_patient_update_last_update_error');
+          });
+      }
+    }
+  } catch (e) {
+    // שגיאות לוגיקה פנימיות לא צריכות להפריע ליצירת התור
+  }
+
+  return ticket;
 }
 
 export function getTicket(id) {

@@ -20,6 +20,7 @@ import {
 import { logStaffActivity } from './activityLog.js';
 import * as backupService from './backup.js';
 import { getSystemStatus } from './systemStatus.js';
+import { testExternalPatientApi } from './externalPatientUpdate.js';
 import { dispatchKioskPrint } from './kioskPrintDispatch.js';
 import {
   saveDisplaySlide,
@@ -394,6 +395,27 @@ app.get('/api/admin/system-status', requireAuth, requireAdmin, async (_, res) =>
     res.json(await getSystemStatus(db));
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// בדיקת חיבור ל-API החיצוני לעדכון מטופלים (best-effort / לא תלוי בקיוסק)
+app.post('/api/admin/external-patient/test', requireAuth, requireAdmin, async (_, res) => {
+  const settings = db.getSettings();
+  try {
+    const result = await testExternalPatientApi({
+      baseUrl: settings.external_patient_update_url,
+    });
+
+    db.setSetting('external_patient_update_last_test_ok', '1');
+    db.setSetting('external_patient_update_last_test_at', new Date().toISOString());
+    db.setSetting('external_patient_update_last_test_error', '');
+
+    res.json({ success: true, result });
+  } catch (e) {
+    db.setSetting('external_patient_update_last_test_ok', '0');
+    db.setSetting('external_patient_update_last_test_at', new Date().toISOString());
+    db.setSetting('external_patient_update_last_test_error', String(e?.message || e).slice(0, 700));
+    res.status(400).json({ success: false, error: e?.message || 'שגיאה בבדיקת חיבור' });
   }
 });
 

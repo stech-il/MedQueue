@@ -11,6 +11,15 @@ import { getTickerBarStyle, TICKER_SIZE_OPTIONS } from '../../lib/tickerSize';
 import DisplayCenterSettings from '../../components/DisplayCenterSettings';
 import { DISPLAY_TEMPLATES } from '../../lib/displayTemplate';
 
+function formatDt(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleString('he-IL');
+  } catch {
+    return iso;
+  }
+}
+
 const TABS = [
   { id: 'general', label: 'כללי', icon: '🏥' },
   { id: 'display', label: 'מסך תצוגה', icon: '📺' },
@@ -82,6 +91,17 @@ const EMPTY_FORM = {
   display_center_slide_seconds: '8',
   tts_playback: 'both',
   backup_auto_daily: '1',
+
+  // אינטגרציה: API לעדכון מטופלים בעת יצירת תור בקיוסק
+  external_patient_update_enabled: '0',
+  external_patient_update_url: '',
+  external_patient_update_api_key: '',
+  external_patient_update_last_test_ok: '0',
+  external_patient_update_last_test_at: '',
+  external_patient_update_last_test_error: '',
+  external_patient_update_last_update_ok: '0',
+  external_patient_update_last_update_at: '',
+  external_patient_update_last_update_error: '',
 };
 
 function ChoiceCards({ name, value, options, onChange }) {
@@ -109,6 +129,7 @@ export default function ClinicSettings() {
   const [edgeVoices, setEdgeVoices] = useState([]);
   const [browserVoices, setBrowserVoices] = useState([]);
   const [testing, setTesting] = useState(false);
+  const [testingExternal, setTestingExternal] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -145,6 +166,16 @@ export default function ClinicSettings() {
         display_center_slide_seconds: s.display_center_slide_seconds || '8',
         tts_playback: s.tts_playback || 'both',
         backup_auto_daily: s.backup_auto_daily ?? '1',
+
+        external_patient_update_enabled: s.external_patient_update_enabled ?? '0',
+        external_patient_update_url: s.external_patient_update_url || '',
+        external_patient_update_api_key: s.external_patient_update_api_key || '',
+        external_patient_update_last_test_ok: s.external_patient_update_last_test_ok ?? '0',
+        external_patient_update_last_test_at: s.external_patient_update_last_test_at || '',
+        external_patient_update_last_test_error: s.external_patient_update_last_test_error || '',
+        external_patient_update_last_update_ok: s.external_patient_update_last_update_ok ?? '0',
+        external_patient_update_last_update_at: s.external_patient_update_last_update_at || '',
+        external_patient_update_last_update_error: s.external_patient_update_last_update_error || '',
       });
       setAnnounceSettings(s);
     });
@@ -344,6 +375,97 @@ export default function ClinicSettings() {
                     תצוגה מקדימה
                   </span>
                 </div>
+              </div>
+            </section>
+
+            <section className="settings-block">
+              <h2 className="settings-block__title">עדכון מטופלים ב-API חיצוני (קיוסק)</h2>
+              <p className="settings-hint settings-hint--top">
+                בעת יצירת תור בקיוסק, המערכת תנסה לעדכן את המטופל באמצעות ה-API שהגדרת. כשל ב-API לא אמור להפיל הנפקת תור.
+              </p>
+
+              <label className="settings-check">
+                <input
+                  type="checkbox"
+                  checked={form.external_patient_update_enabled === '1'}
+                  onChange={(e) => setForm({ ...form, external_patient_update_enabled: e.target.checked ? '1' : '0' })}
+                />
+                <span>הפעלת עדכון מטופלים בקיוסק</span>
+              </label>
+
+              <div className="settings-field">
+                <label htmlFor="external_patient_update_url">URL ל-API (למשל: https://.../api.php)</label>
+                <input
+                  id="external_patient_update_url"
+                  value={form.external_patient_update_url}
+                  onChange={(e) => setForm({ ...form, external_patient_update_url: e.target.value })}
+                  placeholder="https://.../api.php"
+                  dir="ltr"
+                />
+                <p className="settings-hint">המערכת תשלח בקשות `action=test` ו-`action=update`.</p>
+              </div>
+
+              <div className="settings-field">
+                <label htmlFor="external_patient_update_api_key">api_key לקוד הגישה</label>
+                <input
+                  id="external_patient_update_api_key"
+                  type="password"
+                  value={form.external_patient_update_api_key}
+                  onChange={(e) => setForm({ ...form, external_patient_update_api_key: e.target.value })}
+                  placeholder="הדבק api_key כאן"
+                  dir="ltr"
+                />
+                <p className="settings-hint">נשלח ל-API רק בזמן עדכון (לא מוצג לקצה ה-Client).</p>
+              </div>
+
+              <div className="settings-actions-inline">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={async () => {
+                    setTestingExternal(true);
+                    try {
+                      await api.testExternalPatientConnection();
+                      const now = new Date().toISOString();
+                      setForm((f) => ({
+                        ...f,
+                        external_patient_update_last_test_ok: '1',
+                        external_patient_update_last_test_at: now,
+                        external_patient_update_last_test_error: '',
+                      }));
+                      notify('חיבור API תקין');
+                    } catch (e) {
+                      const now = new Date().toISOString();
+                      setForm((f) => ({
+                        ...f,
+                        external_patient_update_last_test_ok: '0',
+                        external_patient_update_last_test_at: now,
+                        external_patient_update_last_test_error: e?.message ? String(e.message).slice(0, 700) : String(e).slice(0, 700),
+                      }));
+                      notify(e.message, 'err');
+                    } finally {
+                      setTestingExternal(false);
+                    }
+                  }}
+                  disabled={testingExternal}
+                >
+                  {testingExternal ? 'בודק…' : 'בדיקת חיבור עכשיו'}
+                </button>
+              </div>
+
+              <div className="settings-hint" style={{ marginTop: '1rem' }}>
+                <div>
+                  בדיקה אחרונה: {form.external_patient_update_last_test_ok === '1' ? 'הצלחה' : '—'} · {formatDt(form.external_patient_update_last_test_at)}
+                </div>
+                {form.external_patient_update_last_test_error && (
+                  <div style={{ color: '#f87171', marginTop: 6 }}>שגיאה: {form.external_patient_update_last_test_error}</div>
+                )}
+                <div style={{ marginTop: 8 }}>
+                  עדכון אחרון בקיוסק: {form.external_patient_update_last_update_ok === '1' ? 'הצלחה' : '—'} · {formatDt(form.external_patient_update_last_update_at)}
+                </div>
+                {form.external_patient_update_last_update_error && (
+                  <div style={{ color: '#f87171', marginTop: 6 }}>{form.external_patient_update_last_update_error}</div>
+                )}
               </div>
             </section>
           </div>
