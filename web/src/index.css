@@ -1903,30 +1903,48 @@ select:focus {
 }
 
 .room-station-nav__toggle {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border: 1px solid #e2e8f0;
+  gap: 0.55rem;
+  min-height: 52px;
+  min-width: 52px;
+  padding: 0.5rem 1rem;
+  border: 2px solid #cbd5e1;
   border-radius: 12px;
-  background: #f8fafc;
-  color: #334155;
+  background: #fff;
+  color: #0f172a;
   cursor: pointer;
   touch-action: manipulation;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 .room-station-nav__toggle:hover,
 .room-station-nav__toggle:focus-visible {
-  background: #f1f5f9;
+  background: #f0fdfa;
   border-color: var(--rs-accent);
   color: var(--rs-accent);
   outline: none;
 }
 
+.room-station-nav__toggle[aria-expanded='true'] {
+  background: #f0fdfa;
+  border-color: var(--rs-accent);
+  color: var(--rs-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rs-accent) 22%, transparent);
+}
+
 .room-station-nav__icon {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.room-station-nav__toggle-label {
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .room-station-nav__panel {

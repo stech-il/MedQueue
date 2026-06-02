@@ -5,11 +5,19 @@ import { formatRoomNumberBadge } from '../lib/roomDisplay';
 
 function RoomsIcon() {
   return (
-    <svg className="room-station-nav__icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M3 5a2 2 0 0 1 2-2h3v18H5a2 2 0 0 1-2-2V5zm8 2a2 2 0 0 1 2-2h3v16h-3a2 2 0 0 1-2-2V7zm8-2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3V3h3zM6 7v2h2V7H6zm8 4v2h2v-2h-2zm8 4v2h2v-2h-2z"
-      />
+    <svg
+      className="room-station-nav__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="4" width="7" height="16" rx="1.5" />
+      <rect x="14" y="4" width="7" height="16" rx="1.5" />
+      <path d="M6.5 11h1M16.5 11h1M6.5 15h1M16.5 15h1" strokeWidth="2.5" />
     </svg>
   );
 }
@@ -43,10 +51,10 @@ export default function RoomStationNav({ currentRoomId }) {
         className="room-station-nav__toggle"
         aria-label="מעבר לעמדת חדר אחר"
         aria-expanded={open}
-        title="חדרים"
         onClick={() => setOpen((v) => !v)}
       >
         <RoomsIcon />
+        <span className="room-station-nav__toggle-label">חדרים</span>
       </button>
       {open && (
         <div className="room-station-nav__panel" role="menu">
