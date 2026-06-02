@@ -136,16 +136,39 @@ export default function RoomsManage() {
     setDraft((prev) => {
       const cur = prev[roomId];
       const oldGroup = cur.shared_group?.trim();
-      const keepLinks = oldGroup && oldGroup === groupName ? cur.linkedRoomIds : [];
+      const linkedRoomIds =
+        oldGroup === groupName
+          ? cur.linkedRoomIds
+          : rooms
+              .filter(
+                (o) =>
+                  o.id !== roomId &&
+                  o.is_active &&
+                  ((prev[o.id]?.shared_group ?? o.shared_group ?? '').trim() === groupName)
+              )
+              .map((o) => o.id);
       return {
         ...prev,
         [roomId]: {
           ...cur,
           shared_group: groupName,
-          linkedRoomIds: keepLinks,
+          linkedRoomIds,
         },
       };
     });
+  };
+
+  const selectAllLinks = (roomId) => {
+    const group = draft[roomId]?.shared_group?.trim();
+    if (!group) return;
+    const ids = activeRooms
+      .filter((o) => {
+        if (o.id === roomId) return false;
+        const g = (draft[o.id]?.shared_group ?? o.shared_group ?? '').trim();
+        return !g || g === group;
+      })
+      .map((o) => o.id);
+    patchDraft(roomId, { linkedRoomIds: ids });
   };
 
   const createNewSharedGroup = (roomId) => {
@@ -245,7 +268,7 @@ export default function RoomsManage() {
         <div>
           <h1 className="rooms-manage__title">ניהול חדרים</h1>
           <p className="rooms-manage__sub">
-            בחר חדר מהרשימה, ערוך בצד שמאל ולחץ שמור. תור משותף — בוחרים קבוצה נפרדת (לא בהכרח רופאים) ומקשרים רק חדרים מאותה קבוצה.
+            בחר חדר מהרשימה, ערוך בצד שמאל ולחץ שמור. תור משותף — ניתן לקשר 3 חדרים ויותר: אותה קבוצה, סמן את כל השותפים (או «סמן הכל») ושמור.
           </p>
         </div>
         <button type="button" className="btn-success" onClick={() => setShowAdd((v) => !v)}>
@@ -505,8 +528,17 @@ export default function RoomsManage() {
                       </datalist>
                     </label>
                     <p className="rooms-manage__hint">
-                      חדרים לקישור בקבוצה «{currentGroup}» (רק תור נפרד או כבר בקבוצה הזו):
+                      חדרים לקישור בקבוצה «{currentGroup}» — אין מגבלה על מספר החדרים (רק תור נפרד או כבר בקבוצה הזו):
                     </p>
+                    {linkableOthers.length > 0 && (
+                      <button
+                        type="button"
+                        className="rooms-manage__mode-btn rooms-manage__select-all"
+                        onClick={() => selectAllLinks(selectedId)}
+                      >
+                        סמן את כל החדרים הזמינים ({linkableOthers.length})
+                      </button>
+                    )}
                     <div className="rooms-manage__chips">
                       {linkableOthers.length === 0 ? (
                         <span className="rooms-manage__hint">אין חדרים זמינים לקישור</span>

@@ -1,11 +1,13 @@
 /** כרטיס חדר במסך תצוגה — עיצוב MedQueue */
 
 import { formatRoomNumberBadge } from '../lib/roomDisplay';
+import WaitingNumbersGrid from './WaitingNumbersGrid';
 
 export default function RoomQueueCard({ room, current, waiting = [] }) {
   const accent = room?.color || '#3b82f6';
   const hasContent = current || waiting.length > 0;
   const roomNumBadge = formatRoomNumberBadge(room);
+  const waitSize = current ? 'sm' : 'md';
 
   return (
     <article className="room-queue-card" style={{ '--room-accent': accent }}>
@@ -17,25 +19,26 @@ export default function RoomQueueCard({ room, current, waiting = [] }) {
         {!hasContent ? (
           <p className="room-queue-card__empty">אין ממתינים</p>
         ) : (
-          <ul className="room-queue-card__list">
+          <div className="room-queue-card__stack">
             {current && (
-              <li className="room-queue-card__item room-queue-card__item--active">
+              <div className="room-queue-card__current">
                 <span className="room-queue-card__code room-queue-card__code--current">
                   {current.display_code}
                 </span>
                 <span className="room-queue-card__status">
                   {current.status === 'serving' ? 'בטיפול' : 'כרגע מטופל'}
                 </span>
-              </li>
+              </div>
             )}
-            {waiting.map((t) => (
-              <li key={t.id} className="room-queue-card__item">
-                <span className="room-queue-card__code room-queue-card__code--wait">
-                  {t.display_code}
-                </span>
-              </li>
-            ))}
-          </ul>
+            {waiting.length > 0 && (
+              <>
+                {current && (
+                  <p className="room-queue-card__wait-label">ממתינים ({waiting.length})</p>
+                )}
+                <WaitingNumbersGrid tickets={waiting} size={waitSize} />
+              </>
+            )}
+          </div>
         )}
       </div>
     </article>

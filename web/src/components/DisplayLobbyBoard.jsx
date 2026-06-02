@@ -4,6 +4,7 @@ import DisplayHeader from './DisplayHeader';
 import DisplayRoomPanel from './DisplayRoomPanel';
 import DisplayCenterMedia from './DisplayCenterMedia';
 import Ticker from './Ticker';
+import WaitingNumbersGrid from './WaitingNumbersGrid';
 
 function splitSides(serving) {
   const list = serving || [];
@@ -58,7 +59,13 @@ export function DisplaySingleRoomBoard({ room, current, queue, settings, clock, 
       <DisplayHeader settings={settings} clock={clock} variant="board" />
       <div className="display-board__body display-board__body--single">
         <div className="display-board__single-wrap">
-          <DisplayRoomPanel room={room} current={current} waiting={waitingOnly} large />
+          <DisplayRoomPanel room={room} current={current} waiting={[]} large />
+          {waitingOnly.length > 0 && (
+            <div className="display-board__wait-block">
+              <p className="display-board__wait-title">ממתינים ({waitingOnly.length})</p>
+              <WaitingNumbersGrid tickets={waitingOnly} size="lg" />
+            </div>
+          )}
         </div>
       </div>
       <Ticker messages={ticker} size={settings.ticker_size || 'md'} />
