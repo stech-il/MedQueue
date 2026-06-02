@@ -186,9 +186,9 @@ export default function RoomStation() {
                   type="button"
                   className="rs-btn rs-btn--secondary"
                   disabled={loading}
-                  onClick={() => act(() => api.announceTicket(current.id), 'הקראה שוב')}
+                  onClick={() => act(() => api.announceTicket(current.id), 'קרא שוב')}
                 >
-                  הקראה שוב
+                  קרא שוב
                 </button>
                 <button
                   type="button"
