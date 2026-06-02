@@ -113,18 +113,21 @@ export default function RoomStation() {
       )}
 
       <header className="room-station__topbar">
-        <RoomStationNav currentRoomId={rid} />
-        <div className="room-station__topbar-text">
-          <p className="room-station__clinic">{clinicName}</p>
-          <h1 className="room-station__title">{room.name}</h1>
-          {roomBadge && <p className="room-station__subtitle">{roomBadge}</p>}
-        </div>
-        <div className="room-station__topbar-stat">
-          <span className="room-station__stat-value">{waitingCount}</span>
-          <span className="room-station__stat-label">ממתינים</span>
+        <div className="room-station__container room-station__topbar-inner">
+          <RoomStationNav currentRoomId={rid} />
+          <div className="room-station__topbar-text">
+            <p className="room-station__clinic">{clinicName}</p>
+            <h1 className="room-station__title">{room.name}</h1>
+            {roomBadge && <p className="room-station__subtitle">{roomBadge}</p>}
+          </div>
+          <div className="room-station__topbar-stat">
+            <span className="room-station__stat-value">{waitingCount}</span>
+            <span className="room-station__stat-label">ממתינים</span>
+          </div>
         </div>
       </header>
 
+      <div className="room-station__container room-station__main">
       <div className="room-station__hero">
         <div className="room-station__summary">
           <div className="room-station__summary-col room-station__summary-col--current">
@@ -263,9 +266,12 @@ export default function RoomStation() {
           )}
         </div>
       </div>
+      </div>
 
       <footer className="room-station__footer">
-        <p className="room-station__credit">פותח ע&quot;י שיטכנולוגיות 2026</p>
+        <div className="room-station__container">
+          <p className="room-station__credit">פותח ע&quot;י שיטכנולוגיות 2026</p>
+        </div>
       </footer>
     </div>
   );
