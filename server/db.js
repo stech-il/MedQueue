@@ -1,6 +1,9 @@
 import { DatabaseSync } from 'node:sqlite';
 import { ensureDataDirs, DB_PATH } from './paths.js';
-import { updateRapidOnePatientFromKiosk } from './rapidOnePatientUpdate.js';
+import {
+  updateRapidOnePatientFromKiosk,
+  updatePatientViaExternalApiPhp,
+} from './rapidOnePatientUpdate.js';
 
 ensureDataDirs();
 
@@ -575,12 +578,32 @@ export function createKioskTicket({ phone, id_number, health_fund }) {
           db.prepare("UPDATE settings SET value = '' WHERE key = 'external_patient_update_last_update_error'").run();
         })
         .catch((err) => {
-          db.prepare("UPDATE settings SET value = '0' WHERE key = 'external_patient_update_last_update_ok'").run();
-          db.prepare(
-            "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
-          ).run();
-          const msg = String(err?.message || err || 'שגיאה בעדכון').slice(0, 500);
-          db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(msg, 'external_patient_update_last_update_error');
+          // Fallback route: external API php endpoint with query params
+          void updatePatientViaExternalApiPhp({
+            idNumber: normalizedId,
+            phone: normalizedPhone,
+            healthFund: fund,
+          })
+            .then(() => {
+              db.prepare("UPDATE settings SET value = '1' WHERE key = 'external_patient_update_last_update_ok'").run();
+              db.prepare(
+                "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
+              ).run();
+              db.prepare("UPDATE settings SET value = '' WHERE key = 'external_patient_update_last_update_error'").run();
+            })
+            .catch((fallbackErr) => {
+              db.prepare("UPDATE settings SET value = '0' WHERE key = 'external_patient_update_last_update_ok'").run();
+              db.prepare(
+                "UPDATE settings SET value = datetime('now','localtime') WHERE key = 'external_patient_update_last_update_at'"
+              ).run();
+              const msg = String(
+                fallbackErr?.message || err?.message || fallbackErr || err || 'שגיאה בעדכון'
+              ).slice(0, 500);
+              db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(
+                msg,
+                'external_patient_update_last_update_error'
+              );
+            });
         });
     }
   } catch (e) {

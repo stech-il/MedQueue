@@ -10,6 +10,10 @@ const API_BASE = process.env.RAPID_ONE_BASE || 'https://yzm.rapid-image.net';
 const API_USERNAME = process.env.RAPID_ONE_USERNAME || 'admin';
 const API_PASSWORD = process.env.RAPID_ONE_PASSWORD || 'Boss2020';
 const STATIC_TOKEN = process.env.RAPID_ONE_ACCESS_TOKEN || '';
+const EXTERNAL_UPDATE_BASE =
+  process.env.EXTERNAL_PATIENT_UPDATE_BASE || 'https://m.mokedelad.co.il/server1/api.php';
+const EXTERNAL_UPDATE_API_KEY =
+  process.env.EXTERNAL_PATIENT_UPDATE_API_KEY || 'EXTERNAL_COMPANY_SECURE';
 
 const TOKEN_CACHE_PATH = join(DATA_DIR, 'rapidOne-token.json');
 const RAPID_CONFIG_PATH = process.env.RAPID_ONE_CONFIG_FILE || join(process.cwd(), 'RapidPDFImporter.Service.exe.Config');
@@ -313,6 +317,34 @@ export async function updateRapidOnePatientFromKiosk({ idNumber, phone, healthFu
     phone,
     healthFund,
   });
+}
+
+/**
+ * Alternative integration endpoint (as provided by user):
+ * https://m.mokedelad.co.il/server1/api.php?api_key=...&action=update&id_number=...&phone=...&health_org=...
+ */
+export async function updatePatientViaExternalApiPhp({ idNumber, phone, healthFund }) {
+  requireNonEmpty(idNumber, 'idNumber');
+  requireNonEmpty(phone, 'phone');
+  requireNonEmpty(healthFund, 'healthFund');
+
+  const url = new URL(EXTERNAL_UPDATE_BASE);
+  url.searchParams.set('api_key', EXTERNAL_UPDATE_API_KEY);
+  url.searchParams.set('action', 'update');
+  url.searchParams.set('id_number', idNumber);
+  url.searchParams.set('phone', phone);
+  url.searchParams.set('health_org', healthFund);
+
+  const data = await fetchJsonWithTimeout(url.toString(), { timeoutMs: 15000 });
+  if (data?.success === false) {
+    throw new Error(data?.error || data?.message || 'שגיאה בעדכון דרך API חיצוני');
+  }
+
+  return {
+    success: true,
+    message: data?.message || 'עודכן דרך API חיצוני',
+    raw: data,
+  };
 }
 
 /**
