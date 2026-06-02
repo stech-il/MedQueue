@@ -20,7 +20,7 @@ import {
 import { logStaffActivity } from './activityLog.js';
 import * as backupService from './backup.js';
 import { getSystemStatus } from './systemStatus.js';
-import { testExternalPatientApi } from './externalPatientUpdate.js';
+import { testRapidOneConnection } from './rapidOnePatientUpdate.js';
 import { dispatchKioskPrint } from './kioskPrintDispatch.js';
 import {
   saveDisplaySlide,
@@ -398,13 +398,12 @@ app.get('/api/admin/system-status', requireAuth, requireAdmin, async (_, res) =>
   }
 });
 
-// בדיקת חיבור ל-API החיצוני לעדכון מטופלים (best-effort / לא תלוי בקיוסק)
+// בדיקת חיבור ל-Rapid One (best-effort / לא תלוי בקיוסק)
 app.post('/api/admin/external-patient/test', requireAuth, requireAdmin, async (_, res) => {
   const settings = db.getSettings();
   try {
-    const result = await testExternalPatientApi({
-      baseUrl: settings.external_patient_update_url,
-    });
+    // הסטטוס נקבע לפי יכולת יצירת token + תקינות endpoint (ללא תלות ב-URL/ApiKey חיצוניים).
+    const result = await testRapidOneConnection();
 
     db.setSetting('external_patient_update_last_test_ok', '1');
     db.setSetting('external_patient_update_last_test_at', new Date().toISOString());

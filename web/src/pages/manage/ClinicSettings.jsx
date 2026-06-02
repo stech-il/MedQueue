@@ -379,9 +379,9 @@ export default function ClinicSettings() {
             </section>
 
             <section className="settings-block">
-              <h2 className="settings-block__title">עדכון מטופלים ב-API חיצוני (קיוסק)</h2>
+              <h2 className="settings-block__title">חיבור Rapid One (קיוסק)</h2>
               <p className="settings-hint settings-hint--top">
-                בעת יצירת תור בקיוסק, המערכת תנסה לעדכן את המטופל באמצעות ה-API שהגדרת. כשל ב-API לא אמור להפיל הנפקת תור.
+                בעת יצירת תור בקיוסק, המערכת תנסה לעדכן טלפון וקופת חולים ב-Rapid One. כשל בחיבור לא אמור להפיל הנפקת תור.
               </p>
 
               <label className="settings-check">
@@ -393,30 +393,9 @@ export default function ClinicSettings() {
                 <span>הפעלת עדכון מטופלים בקיוסק</span>
               </label>
 
-              <div className="settings-field">
-                <label htmlFor="external_patient_update_url">URL ל-API (למשל: https://.../api.php)</label>
-                <input
-                  id="external_patient_update_url"
-                  value={form.external_patient_update_url}
-                  onChange={(e) => setForm({ ...form, external_patient_update_url: e.target.value })}
-                  placeholder="https://.../api.php"
-                  dir="ltr"
-                />
-                <p className="settings-hint">המערכת תשלח בקשות `action=test` ו-`action=update`.</p>
-              </div>
-
-              <div className="settings-field">
-                <label htmlFor="external_patient_update_api_key">api_key לקוד הגישה</label>
-                <input
-                  id="external_patient_update_api_key"
-                  type="password"
-                  value={form.external_patient_update_api_key}
-                  onChange={(e) => setForm({ ...form, external_patient_update_api_key: e.target.value })}
-                  placeholder="הדבק api_key כאן"
-                  dir="ltr"
-                />
-                <p className="settings-hint">נשלח ל-API רק בזמן עדכון (לא מוצג לקצה ה-Client).</p>
-              </div>
+              <p className="settings-hint" style={{ marginTop: '0.75rem' }}>
+                פרטי Rapid One מוגדרים בשרת דרך משתני סביבה. לדוגמה: <code>RAPID_ONE_USERNAME</code>, <code>RAPID_ONE_PASSWORD</code>, <code>RAPID_ONE_BASE</code>.
+              </p>
 
               <div className="settings-actions-inline">
                 <button
