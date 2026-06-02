@@ -89,8 +89,6 @@ export default function RoomStation() {
     queue,
     otherRooms,
     allRooms,
-    sharedPartners,
-    isSharedQueue,
     settings,
     health_funds,
   } = state;
@@ -127,15 +125,6 @@ export default function RoomStation() {
         </div>
       </header>
 
-      {isSharedQueue && (
-        <div className="room-station__shared-banner">
-          <p className="room-station__shared-label">חדר זה משותף עם</p>
-          <p className="room-station__shared-partners">
-            {sharedPartners?.map((p) => p.name).join(' · ') || '—'}
-          </p>
-        </div>
-      )}
-
       <div className="room-station__hero">
         <div className="room-station__summary">
           <div className="room-station__summary-col room-station__summary-col--current">
@@ -163,14 +152,7 @@ export default function RoomStation() {
             <span className="room-station__summary-label">הבא בתור</span>
             <p className="room-station__summary-next">
               {next ? (
-                <>
-                  <strong>{next.display_code}</strong>
-                  {isSharedQueue &&
-                    next.queue_room_name &&
-                    next.queue_room_name !== room.name && (
-                      <span className="room-station__muted"> ({next.queue_room_name})</span>
-                    )}
-                </>
+                <strong>{next.display_code}</strong>
               ) : (
                 <span className="room-station__muted">אין ממתינים</span>
               )}

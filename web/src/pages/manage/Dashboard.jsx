@@ -29,7 +29,7 @@ export default function Dashboard() {
       </div>
       <h2 style={h2}>מצב חדרים</h2>
       <div style={roomGrid}>
-        {roomStats.map(({ room, waiting, current, partners }) => (
+        {roomStats.map(({ room, waiting, current }) => (
           <div key={room.id} className="card" style={roomCard}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <strong style={{ color: room.color }}>{room.name}</strong>
@@ -37,9 +37,6 @@ export default function Dashboard() {
                 עמדה ↗
               </Link>
             </div>
-            {partners.length > 0 && (
-              <p style={meta}>תור משותף: {partners.join(', ')}</p>
-            )}
             <p style={meta}>ממתינים: {waiting}</p>
             <p style={currentStyle}>{current ? `פעיל: ${current}` : 'פנוי'}</p>
           </div>
