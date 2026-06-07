@@ -2,7 +2,7 @@ import './puppeteerEnv.js';
 import { existsSync } from 'fs';
 import { findChromiumExecutable } from './findChromium.js';
 
-/** Render / Linux — Chrome עם זיכרון מצומצם */
+/** Render / Linux — Chrome עם זיכרון מצומצם (ללא single-process — גורם ל-Target closed) */
 const RENDER_CHROME_ARGS = [
   '--no-sandbox',
   '--disable-setuid-sandbox',
@@ -14,9 +14,8 @@ const RENDER_CHROME_ARGS = [
   '--disable-default-apps',
   '--disable-sync',
   '--no-first-run',
-  '--no-zygote',
-  '--single-process',
-  '--memory-pressure-off',
+  '--hide-scrollbars',
+  '--mute-audio',
 ];
 
 const DESKTOP_CHROME_ARGS = [
@@ -37,7 +36,7 @@ function buildOpts(executablePath, { forRender = false } = {}) {
     headless: true,
     executablePath,
     args: forRender ? RENDER_CHROME_ARGS : DESKTOP_CHROME_ARGS,
-    defaultViewport: { width: 1024, height: 768 },
+    defaultViewport: forRender ? { width: 800, height: 600 } : { width: 1024, height: 768 },
     ignoreHTTPSErrors: true,
   };
 }
@@ -49,7 +48,27 @@ export async function getPuppeteerLaunchOptions() {
     return buildOpts(envPath, { forRender: isRenderLinux() });
   }
 
-  // Render: קודם Chrome מ-puppeteer (מותקן ב-build), לא sparticuz
+  // Render: קודם Chromium קל (פחות זיכרון), אחר כך Chrome מלא מ-puppeteer
+  if (isRenderLinux()) {
+    try {
+      const chromium = (await import('@sparticuz/chromium')).default;
+      chromium.setGraphicsMode = false;
+      const executablePath = await chromium.executablePath();
+      if (executablePath && existsSync(executablePath)) {
+        console.log('WhatsApp Chrome (sparticuz):', executablePath);
+        return {
+          headless: chromium.headless ?? true,
+          executablePath,
+          args: [...(chromium.args || []), ...RENDER_CHROME_ARGS],
+          defaultViewport: { width: 800, height: 600 },
+          ignoreHTTPSErrors: true,
+        };
+      }
+    } catch (e) {
+      console.warn('@sparticuz/chromium:', e.message);
+    }
+  }
+
   const puppeteer = await import('puppeteer');
   try {
     const executablePath = await puppeteer.default.executablePath();
@@ -59,25 +78,6 @@ export async function getPuppeteerLaunchOptions() {
     }
   } catch (e) {
     console.warn('puppeteer.executablePath:', e.message);
-  }
-
-  if (isRenderLinux()) {
-    try {
-      const chromium = (await import('@sparticuz/chromium')).default;
-      chromium.setGraphicsMode = false;
-      const executablePath = await chromium.executablePath();
-      if (executablePath && existsSync(executablePath)) {
-        console.log('WhatsApp Chrome (sparticuz):', executablePath);
-        return {
-          headless: true,
-          executablePath,
-          args: [...(chromium.args || []), ...RENDER_CHROME_ARGS],
-          defaultViewport: { width: 1024, height: 768 },
-        };
-      }
-    } catch (e) {
-      console.warn('@sparticuz/chromium:', e.message);
-    }
   }
 
   const local = findChromiumExecutable();
