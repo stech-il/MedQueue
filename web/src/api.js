@@ -139,6 +139,10 @@ export const api = {
   getBackups: () => request('/api/admin/backups'),
   createBackup: () => request('/api/admin/backup', { method: 'POST' }),
   testExternalPatientConnection: () => request('/api/admin/external-patient/test', { method: 'POST' }),
+  getWhatsAppStatus: () => request('/api/admin/whatsapp/status'),
+  connectWhatsApp: () => request('/api/admin/whatsapp/connect', { method: 'POST' }),
+  disconnectWhatsApp: () => request('/api/admin/whatsapp/disconnect', { method: 'POST' }),
+  testAlertEmail: () => request('/api/admin/email/test', { method: 'POST' }),
   getActivityLog: (params = {}) => {
     const q = new URLSearchParams();
     if (params.from) q.set('from', params.from);

@@ -22,6 +22,9 @@ import * as backupService from './backup.js';
 import { getSystemStatus } from './systemStatus.js';
 import { testExternalPatientConnection } from './rapidOnePatientUpdate.js';
 import { dispatchKioskPrint } from './kioskPrintDispatch.js';
+import { maskSettings, shouldSkipSecretUpdate } from './settingsMask.js';
+import * as emailAlert from './emailAlert.js';
+import * as whatsappService from './whatsappService.js';
 import {
   saveDisplaySlide,
   saveDisplayImage,
@@ -61,6 +64,7 @@ function emitTicketCalled(ticket, room, actor = null) {
   io.emit('ticket:called', payload);
   io.emit('state:refresh', { timestamp: Date.now() });
   playServerTicketCall(ticket, room, settings);
+  void whatsappService.sendCallWhatsApp(ticket, room, settings);
   logStaffActivity({
     user: actor || { username: 'מערכת' },
     action: 'call',
@@ -97,7 +101,7 @@ app.get('/api/health', (_, res) => {
   res.json({ ok: true, service: 'medqueue', time: Date.now() });
 });
 
-app.get('/api/settings', (_, res) => res.json(db.getSettings()));
+app.get('/api/settings', (_, res) => res.json(maskSettings(db.getSettings())));
 
 app.get('/api/tts/voices', async (_, res) => {
   try {
@@ -155,6 +159,7 @@ app.post('/api/kiosk/ticket', async (req, res) => {
     const settings = db.getSettings();
     const reception = db.getReceptionRoom();
     const printResult = await dispatchKioskPrint(io, ticket, settings, reception);
+    void whatsappService.sendKioskWhatsApp(ticket, settings);
     res.status(201).json({ ...ticket, ...printResult });
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -399,6 +404,38 @@ app.get('/api/admin/system-status', requireAuth, requireAdmin, async (_, res) =>
 });
 
 // בדיקת חיבור ל-API החיצוני (best-effort / לא תלוי בקיוסק)
+app.get('/api/admin/whatsapp/status', requireAuth, requireAdmin, (_, res) => {
+  res.json(whatsappService.getWhatsAppStatus());
+});
+
+app.post('/api/admin/whatsapp/connect', requireAuth, requireAdmin, async (_, res) => {
+  try {
+    db.setSetting('whatsapp_enabled', '1');
+    const status = await whatsappService.startWhatsApp();
+    res.json(status);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.post('/api/admin/whatsapp/disconnect', requireAuth, requireAdmin, async (_, res) => {
+  try {
+    const status = await whatsappService.logoutWhatsApp();
+    res.json(status);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.post('/api/admin/email/test', requireAuth, requireAdmin, async (_, res) => {
+  try {
+    const result = await emailAlert.sendTestEmail(db.getSettings());
+    res.json({ success: true, ...result });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
 app.post('/api/admin/external-patient/test', requireAuth, requireAdmin, async (_, res) => {
   try {
     const result = await testExternalPatientConnection();
@@ -433,12 +470,25 @@ app.post('/api/admin/backup', requireAuth, requireAdmin, async (_, res) => {
   }
 });
 
-app.put('/api/settings', requireAuth, requireAdmin, (req, res) => {
+app.put('/api/settings', requireAuth, requireAdmin, async (req, res) => {
+  const wasWhatsAppEnabled = db.getSettings().whatsapp_enabled === '1';
   for (const [key, value] of Object.entries(req.body)) {
+    if (shouldSkipSecretUpdate(key, value)) continue;
     db.setSetting(key, String(value));
   }
-  broadcast('settings:updated', db.getSettings());
-  res.json(db.getSettings());
+  const settings = db.getSettings();
+  const nowEnabled = settings.whatsapp_enabled === '1';
+  if (nowEnabled && !wasWhatsAppEnabled) {
+    try {
+      await whatsappService.startWhatsApp();
+    } catch (e) {
+      console.warn('WhatsApp start after settings:', e.message);
+    }
+  } else if (!nowEnabled && wasWhatsAppEnabled) {
+    await whatsappService.stopWhatsApp();
+  }
+  broadcast('settings:updated', maskSettings(settings));
+  res.json(maskSettings(settings));
 });
 
 app.post('/api/settings/logo', requireAuth, requireAdmin, (req, res) => {
@@ -446,8 +496,8 @@ app.post('/api/settings/logo', requireAuth, requireAdmin, (req, res) => {
     const url = saveClinicLogoFromDataUrl(req.body?.image);
     db.setSetting('clinic_logo', url);
     const settings = db.getSettings();
-    broadcast('settings:updated', settings);
-    res.json({ clinic_logo: url, settings });
+    broadcast('settings:updated', maskSettings(settings));
+    res.json({ clinic_logo: url, settings: maskSettings(settings) });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -457,8 +507,8 @@ app.delete('/api/settings/logo', requireAuth, requireAdmin, (req, res) => {
   removeUploadedLogo();
   db.setSetting('clinic_logo', '/logo.svg');
   const settings = db.getSettings();
-  broadcast('settings:updated', settings);
-  res.json({ clinic_logo: '/logo.svg', settings });
+  broadcast('settings:updated', maskSettings(settings));
+  res.json({ clinic_logo: '/logo.svg', settings: maskSettings(settings) });
 });
 
 app.post('/api/settings/display-slide', requireAuth, requireAdmin, (req, res) => {
@@ -469,8 +519,8 @@ app.post('/api/settings/display-slide', requireAuth, requireAdmin, (req, res) =>
     slides.push(url);
     db.setSetting('display_center_slides', JSON.stringify(slides));
     const updated = db.getSettings();
-    broadcast('settings:updated', updated);
-    res.json({ url, slides, settings: updated });
+    broadcast('settings:updated', maskSettings(updated));
+    res.json({ url, slides, settings: maskSettings(updated) });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -484,8 +534,8 @@ app.delete('/api/settings/display-slide', requireAuth, requireAdmin, (req, res) 
     deleteDisplayMediaFile(url);
     db.setSetting('display_center_slides', JSON.stringify(slides));
     const updated = db.getSettings();
-    broadcast('settings:updated', updated);
-    res.json({ slides, settings: updated });
+    broadcast('settings:updated', maskSettings(updated));
+    res.json({ slides, settings: maskSettings(updated) });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -499,8 +549,8 @@ app.post('/api/settings/display-image', requireAuth, requireAdmin, (req, res) =>
     if (prev && !isExternalVideoUrl(prev)) deleteDisplayMediaFile(prev);
     db.setSetting('display_center_image', url);
     const updated = db.getSettings();
-    broadcast('settings:updated', updated);
-    res.json({ url, settings: updated });
+    broadcast('settings:updated', maskSettings(updated));
+    res.json({ url, settings: maskSettings(updated) });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -526,8 +576,8 @@ app.post('/api/settings/display-video', requireAuth, requireAdmin, (req, res) =>
 
     db.setSetting('display_center_video', url);
     const updated = db.getSettings();
-    broadcast('settings:updated', updated);
-    res.json({ url, settings: updated });
+    broadcast('settings:updated', maskSettings(updated));
+    res.json({ url, settings: maskSettings(updated) });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -547,8 +597,8 @@ app.delete('/api/settings/display-media', requireAuth, requireAdmin, (req, res) 
       db.setSetting('display_center_video', '');
     }
     const updated = db.getSettings();
-    broadcast('settings:updated', updated);
-    res.json({ settings: updated });
+    broadcast('settings:updated', maskSettings(updated));
+    res.json({ settings: maskSettings(updated) });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -728,4 +778,5 @@ httpServer.listen(PORT, async () => {
   } catch (e) {
     console.warn('גיבוי אוטומטי:', e.message);
   }
+  whatsappService.bootstrapWhatsApp().catch((e) => console.warn('WhatsApp:', e.message));
 });

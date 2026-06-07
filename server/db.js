@@ -185,6 +185,24 @@ const defaultSettings = {
   external_patient_update_last_update_ok: '0',
   external_patient_update_last_update_at: '',
   external_patient_update_last_update_error: '',
+
+  // וואטסאפ — הודעות למטופלים + התראות מייל
+  whatsapp_enabled: '0',
+  whatsapp_send_kiosk: '1',
+  whatsapp_send_call: '1',
+  whatsapp_kiosk_template: '',
+  whatsapp_call_template: '',
+  whatsapp_status: 'idle',
+  whatsapp_last_connected_at: '',
+  whatsapp_last_error: '',
+  whatsapp_last_send_ok: '0',
+  whatsapp_last_send_at: '',
+  whatsapp_last_send_error: '',
+  whatsapp_alert_email_enabled: '1',
+  whatsapp_last_alert_at: '',
+  gmail_smtp_user: '',
+  gmail_smtp_app_password: '',
+  gmail_alert_to: '',
 };
 for (const [key, value] of Object.entries(defaultSettings)) {
   const exists = db.prepare('SELECT 1 FROM settings WHERE key = ?').get(key);
