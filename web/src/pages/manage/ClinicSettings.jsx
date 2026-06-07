@@ -22,25 +22,11 @@ function formatDt(iso) {
 
 const TABS = [
   { id: 'general', label: 'כללי', icon: '🏥' },
-  { id: 'whatsapp', label: 'וואטסאפ', icon: '💬' },
   { id: 'display', label: 'מסך תצוגה', icon: '📺' },
   { id: 'kiosk', label: 'קיוסק', icon: '🎫' },
   { id: 'tts', label: 'הקראה', icon: '🔊' },
   { id: 'backup', label: 'גיבוי', icon: '💾' },
 ];
-
-const WA_STATUS_LABELS = {
-  ready: 'מחובר',
-  qr: 'ממתין לסריקת QR',
-  authenticated: 'מאומת — טוען וואטסאפ…',
-  loading: 'טוען…',
-  reconnecting: 'מתחבר מחדש…',
-  initializing: 'מתחיל…',
-  disconnected: 'מנותק',
-  error: 'שגיאה',
-  disabled: 'כבוי',
-  idle: 'לא מחובר',
-};
 
 const EDGE_RATES = [
   { value: '-15%', label: 'איטי (ברור)' },
@@ -116,23 +102,6 @@ const EMPTY_FORM = {
   external_patient_update_last_update_ok: '0',
   external_patient_update_last_update_at: '',
   external_patient_update_last_update_error: '',
-
-  whatsapp_enabled: '0',
-  whatsapp_send_kiosk: '1',
-  whatsapp_send_call: '1',
-  whatsapp_kiosk_template: '',
-  whatsapp_call_template: '',
-  whatsapp_status: 'idle',
-  whatsapp_last_connected_at: '',
-  whatsapp_last_error: '',
-  whatsapp_last_send_ok: '0',
-  whatsapp_last_send_at: '',
-  whatsapp_last_send_error: '',
-  whatsapp_alert_email_enabled: '1',
-  whatsapp_last_alert_at: '',
-  gmail_smtp_user: '',
-  gmail_smtp_app_password: '',
-  gmail_alert_to: '',
 };
 
 function ChoiceCards({ name, value, options, onChange }) {
@@ -163,12 +132,6 @@ export default function ClinicSettings() {
   const [testingExternal, setTestingExternal] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [waStatus, setWaStatus] = useState(null);
-  const [waBusy, setWaBusy] = useState(false);
-  const [testingEmail, setTestingEmail] = useState(false);
-  const [testWaPhone, setTestWaPhone] = useState('');
-  const [testingWaSend, setTestingWaSend] = useState(false);
-
   const notify = (text, type = 'ok') => {
     setMsg(text);
     setMsgType(type);
@@ -212,53 +175,12 @@ export default function ClinicSettings() {
         external_patient_update_last_update_ok: s.external_patient_update_last_update_ok ?? '0',
         external_patient_update_last_update_at: s.external_patient_update_last_update_at || '',
         external_patient_update_last_update_error: s.external_patient_update_last_update_error || '',
-
-        whatsapp_enabled: s.whatsapp_enabled ?? '0',
-        whatsapp_send_kiosk: s.whatsapp_send_kiosk ?? '1',
-        whatsapp_send_call: s.whatsapp_send_call ?? '1',
-        whatsapp_kiosk_template: s.whatsapp_kiosk_template || '',
-        whatsapp_call_template: s.whatsapp_call_template || '',
-        whatsapp_status: s.whatsapp_status || 'idle',
-        whatsapp_last_connected_at: s.whatsapp_last_connected_at || '',
-        whatsapp_last_error: s.whatsapp_last_error || '',
-        whatsapp_last_send_ok: s.whatsapp_last_send_ok ?? '0',
-        whatsapp_last_send_at: s.whatsapp_last_send_at || '',
-        whatsapp_last_send_error: s.whatsapp_last_send_error || '',
-        whatsapp_alert_email_enabled: s.whatsapp_alert_email_enabled ?? '1',
-        whatsapp_last_alert_at: s.whatsapp_last_alert_at || '',
-        gmail_smtp_user: s.gmail_smtp_user || '',
-        gmail_smtp_app_password: s.gmail_smtp_app_password || '',
-        gmail_alert_to: s.gmail_alert_to || '',
       });
       setAnnounceSettings(s);
     });
     api.getTtsVoices().then((v) => setEdgeVoices(v.edge || [])).catch(() => {});
     preloadVoices().then(() => setBrowserVoices(listBrowserHebrewVoices()));
   }, []);
-
-  const refreshWaStatus = async () => {
-    try {
-      const st = await api.getWhatsAppStatus();
-      setWaStatus(st);
-      if (st?.status) {
-        setForm((f) => ({
-          ...f,
-          whatsapp_status: st.status,
-          whatsapp_last_error: st.lastError || '',
-          ...(st.readyAt ? { whatsapp_last_connected_at: st.readyAt } : {}),
-        }));
-      }
-    } catch {
-      /* ignore */
-    }
-  };
-
-  useEffect(() => {
-    if (tab !== 'whatsapp') return undefined;
-    refreshWaStatus();
-    const t = setInterval(refreshWaStatus, 2500);
-    return () => clearInterval(t);
-  }, [tab, form.whatsapp_enabled]);
 
   const save = async () => {
     setSaving(true);
@@ -530,303 +452,6 @@ export default function ClinicSettings() {
                   <div style={{ color: '#f87171', marginTop: 6 }}>{form.external_patient_update_last_update_error}</div>
                 )}
               </div>
-            </section>
-          </div>
-        )}
-
-        {tab === 'whatsapp' && (
-          <div className="settings-sections">
-            <section className="settings-block">
-              <h2 className="settings-block__title">וואטסאפ למטופלים</h2>
-              <p className="settings-hint settings-hint--top">
-                חיבור דרך QR מהטלפון של המרפאה. הסשן נשמר בשרת (דיסק Render). הודעות נשלחות אוטומטית
-                אחרי קיוסק ובקריאה לחדר.
-              </p>
-
-              <label className="settings-check">
-                <input
-                  type="checkbox"
-                  checked={form.whatsapp_enabled === '1'}
-                  onChange={(e) =>
-                    setForm({ ...form, whatsapp_enabled: e.target.checked ? '1' : '0' })
-                  }
-                />
-                <span>הפעל שליחת וואטסאפ</span>
-              </label>
-
-              <label className="settings-check">
-                <input
-                  type="checkbox"
-                  checked={form.whatsapp_send_kiosk === '1'}
-                  onChange={(e) =>
-                    setForm({ ...form, whatsapp_send_kiosk: e.target.checked ? '1' : '0' })
-                  }
-                />
-                <span>שלח הודעה אחרי רישום בקיוסק</span>
-              </label>
-
-              <label className="settings-check">
-                <input
-                  type="checkbox"
-                  checked={form.whatsapp_send_call === '1'}
-                  onChange={(e) =>
-                    setForm({ ...form, whatsapp_send_call: e.target.checked ? '1' : '0' })
-                  }
-                />
-                <span>שלח הודעה בקריאה לחדר (כולל «קרא שוב»)</span>
-              </label>
-
-              <div
-                className={`settings-wa-status settings-wa-status--${waStatus?.status || form.whatsapp_status || 'idle'}`}
-              >
-                <strong>
-                  סטטוס:{' '}
-                  {WA_STATUS_LABELS[waStatus?.status || form.whatsapp_status] || 'לא ידוע'}
-                </strong>
-                {form.whatsapp_last_connected_at && (
-                  <span> · מחובר לאחרונה: {formatDt(form.whatsapp_last_connected_at)}</span>
-                )}
-              </div>
-
-              {(() => {
-                const waStat = waStatus?.status || form.whatsapp_status;
-                const err =
-                  waStatus?.lastError ||
-                  (['error', 'disconnected'].includes(waStat) ? form.whatsapp_last_error : '');
-                return err ? (
-                  <p className="settings-hint" style={{ color: '#f87171' }}>
-                    {err}
-                  </p>
-                ) : null;
-              })()}
-
-              {(waStatus?.status || form.whatsapp_status) === 'authenticated' && (
-                <p className="settings-hint">
-                  הסריקה הצליחה. ממתין לטעינה (עד דקה) — אם נשאר כך, רענן את הדף או לחץ שוב «התחבר».
-                </p>
-              )}
-
-              {waStatus?.qrDataUrl && (
-                <div className="settings-wa-qr">
-                  <p className="settings-hint">סרוק בוואטסאפ → מכשירים מקושרים → קשר מכשיר</p>
-                  <img src={waStatus.qrDataUrl} alt="QR לחיבור וואטסאפ" width={280} height={280} />
-                </div>
-              )}
-
-              <div className="settings-actions-inline">
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={waBusy}
-                  onClick={async () => {
-                    setWaBusy(true);
-                    try {
-                      await save();
-                      const st = await api.connectWhatsApp();
-                      setWaStatus(st);
-                      setForm((f) => ({ ...f, whatsapp_enabled: '1', whatsapp_status: st.status }));
-                      notify('מתחבר לוואטסאפ — סרוק QR אם מופיע');
-                    } catch (e) {
-                      notify(e.message, 'err');
-                    } finally {
-                      setWaBusy(false);
-                    }
-                  }}
-                >
-                  {waBusy ? 'מתחבר…' : 'התחבר / הצג QR'}
-                </button>
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  disabled={waBusy}
-                  onClick={async () => {
-                    if (!confirm('להתנתק מוואטסאפ? יידרש QR מחדש.')) return;
-                    setWaBusy(true);
-                    try {
-                      const st = await api.disconnectWhatsApp();
-                      setWaStatus(st);
-                      notify('התנתק מוואטסאפ');
-                    } catch (e) {
-                      notify(e.message, 'err');
-                    } finally {
-                      setWaBusy(false);
-                    }
-                  }}
-                >
-                  התנתק
-                </button>
-              </div>
-
-              <div className="settings-field" style={{ marginTop: '1rem' }}>
-                <label htmlFor="whatsapp_kiosk_template">תבנית הודעה — קיוסק</label>
-                <textarea
-                  id="whatsapp_kiosk_template"
-                  rows={5}
-                  value={form.whatsapp_kiosk_template}
-                  onChange={(e) => setForm({ ...form, whatsapp_kiosk_template: e.target.value })}
-                  placeholder="ריק = ברירת מחדל. משתנים: {{clinic}} {{code}} {{fund}}"
-                />
-              </div>
-              <div className="settings-field">
-                <label htmlFor="whatsapp_call_template">תבנית הודעה — קריאה לחדר</label>
-                <textarea
-                  id="whatsapp_call_template"
-                  rows={3}
-                  value={form.whatsapp_call_template}
-                  onChange={(e) => setForm({ ...form, whatsapp_call_template: e.target.value })}
-                  placeholder="ריק = ברירת מחדל. משתנים: {{clinic}} {{code}} {{dest}} {{room}} {{announce}}"
-                />
-              </div>
-
-              <div className="settings-field" style={{ marginTop: '1rem' }}>
-                <label htmlFor="wa_test_phone">בדיקת שליחה למספר</label>
-                <input
-                  id="wa_test_phone"
-                  type="tel"
-                  dir="ltr"
-                  value={testWaPhone}
-                  onChange={(e) => setTestWaPhone(e.target.value)}
-                  placeholder="0501234567"
-                />
-              </div>
-              <div className="settings-actions-inline">
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={testingWaSend || !testWaPhone.trim()}
-                  onClick={async () => {
-                    setTestingWaSend(true);
-                    try {
-                      await api.testWhatsAppSend(testWaPhone.trim());
-                      notify('הודעת בדיקה נשלחה');
-                      const s = await api.getSettings();
-                      setForm((f) => ({
-                        ...f,
-                        whatsapp_last_send_ok: s.whatsapp_last_send_ok,
-                        whatsapp_last_send_at: s.whatsapp_last_send_at,
-                        whatsapp_last_send_error: s.whatsapp_last_send_error || '',
-                      }));
-                    } catch (e) {
-                      notify(e.message, 'err');
-                      try {
-                        const s = await api.getSettings();
-                        setForm((f) => ({
-                          ...f,
-                          whatsapp_last_send_ok: s.whatsapp_last_send_ok,
-                          whatsapp_last_send_at: s.whatsapp_last_send_at,
-                          whatsapp_last_send_error: s.whatsapp_last_send_error || '',
-                        }));
-                      } catch {
-                        /* ignore */
-                      }
-                    } finally {
-                      setTestingWaSend(false);
-                    }
-                  }}
-                >
-                  {testingWaSend ? 'שולח…' : 'שלח הודעת בדיקה'}
-                </button>
-              </div>
-
-              <div className="settings-hint" style={{ marginTop: '0.75rem' }}>
-                שליחה אחרונה: {form.whatsapp_last_send_ok === '1' ? 'הצלחה' : '—'} ·{' '}
-                {formatDt(form.whatsapp_last_send_at)}
-                {form.whatsapp_last_send_error && (
-                  <div style={{ color: '#f87171', marginTop: 6 }}>{form.whatsapp_last_send_error}</div>
-                )}
-              </div>
-            </section>
-
-            <section className="settings-block">
-              <h2 className="settings-block__title">התראת מייל (Gmail)</h2>
-              <p className="settings-hint settings-hint--top">
-                כשהוואטסאפ מנותק — נשלח מייל התראה (עד פעם בשעה). ב-Gmail: אימות דו-שלבי → סיסמת
-                אפליקציה.
-              </p>
-
-              <label className="settings-check">
-                <input
-                  type="checkbox"
-                  checked={form.whatsapp_alert_email_enabled === '1'}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      whatsapp_alert_email_enabled: e.target.checked ? '1' : '0',
-                    })
-                  }
-                />
-                <span>שלח מייל כשהוואטסאפ מנותק</span>
-              </label>
-
-              <div className="settings-field">
-                <label htmlFor="gmail_smtp_user">Gmail שולח</label>
-                <input
-                  id="gmail_smtp_user"
-                  type="email"
-                  dir="ltr"
-                  value={form.gmail_smtp_user}
-                  onChange={(e) => setForm({ ...form, gmail_smtp_user: e.target.value })}
-                  placeholder="clinic@gmail.com"
-                />
-              </div>
-              <div className="settings-field">
-                <label htmlFor="gmail_smtp_app_password">סיסמת אפליקציה Gmail</label>
-                <input
-                  id="gmail_smtp_app_password"
-                  type="password"
-                  dir="ltr"
-                  autoComplete="new-password"
-                  value={
-                    form.gmail_smtp_app_password === '********' ? '' : form.gmail_smtp_app_password
-                  }
-                  onChange={(e) =>
-                    setForm({ ...form, gmail_smtp_app_password: e.target.value })
-                  }
-                  placeholder={
-                    form.gmail_smtp_app_password === '********'
-                      ? 'שמורה — השאר ריק לשמירה'
-                      : 'xxxx xxxx xxxx xxxx'
-                  }
-                />
-              </div>
-              <div className="settings-field">
-                <label htmlFor="gmail_alert_to">שלח התראה ל</label>
-                <input
-                  id="gmail_alert_to"
-                  type="email"
-                  dir="ltr"
-                  value={form.gmail_alert_to}
-                  onChange={(e) => setForm({ ...form, gmail_alert_to: e.target.value })}
-                  placeholder="אותו Gmail או מייל אחר"
-                />
-              </div>
-
-              <div className="settings-actions-inline">
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={testingEmail}
-                  onClick={async () => {
-                    setTestingEmail(true);
-                    try {
-                      await save();
-                      await api.testAlertEmail();
-                      notify('מייל בדיקה נשלח');
-                    } catch (e) {
-                      notify(e.message, 'err');
-                    } finally {
-                      setTestingEmail(false);
-                    }
-                  }}
-                >
-                  {testingEmail ? 'שולח…' : 'בדיקת מייל'}
-                </button>
-              </div>
-              {form.whatsapp_last_alert_at && (
-                <p className="settings-hint" style={{ marginTop: '0.5rem' }}>
-                  התראה אחרונה: {formatDt(form.whatsapp_last_alert_at)}
-                </p>
-              )}
             </section>
           </div>
         )}

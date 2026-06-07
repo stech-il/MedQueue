@@ -23,8 +23,6 @@ import { getSystemStatus } from './systemStatus.js';
 import { testExternalPatientConnection } from './rapidOnePatientUpdate.js';
 import { dispatchKioskPrint } from './kioskPrintDispatch.js';
 import { maskSettings, shouldSkipSecretUpdate } from './settingsMask.js';
-import * as emailAlert from './emailAlert.js';
-import * as whatsappService from './whatsappService.js';
 import {
   saveDisplaySlide,
   saveDisplayImage,
@@ -64,7 +62,6 @@ function emitTicketCalled(ticket, room, actor = null) {
   io.emit('ticket:called', payload);
   io.emit('state:refresh', { timestamp: Date.now() });
   playServerTicketCall(ticket, room, settings);
-  void whatsappService.sendCallWhatsApp(ticket, room, settings);
   logStaffActivity({
     user: actor || { username: 'מערכת' },
     action: 'call',
@@ -159,7 +156,6 @@ app.post('/api/kiosk/ticket', async (req, res) => {
     const settings = db.getSettings();
     const reception = db.getReceptionRoom();
     const printResult = await dispatchKioskPrint(io, ticket, settings, reception);
-    void whatsappService.sendKioskWhatsApp(ticket, settings);
     res.status(201).json({ ...ticket, ...printResult });
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -404,59 +400,6 @@ app.get('/api/admin/system-status', requireAuth, requireAdmin, async (_, res) =>
 });
 
 // בדיקת חיבור ל-API החיצוני (best-effort / לא תלוי בקיוסק)
-app.get('/api/admin/whatsapp/status', requireAuth, requireAdmin, (_, res) => {
-  res.json(whatsappService.getWhatsAppStatus());
-});
-
-app.post('/api/admin/whatsapp/connect', requireAuth, requireAdmin, async (_, res) => {
-  try {
-    db.setSetting('whatsapp_enabled', '1');
-    const status = await whatsappService.startWhatsApp();
-    res.json(status);
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
-});
-
-app.post('/api/admin/whatsapp/disconnect', requireAuth, requireAdmin, async (_, res) => {
-  try {
-    const status = await whatsappService.logoutWhatsApp();
-    res.json(status);
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
-});
-
-app.post('/api/admin/whatsapp/test-send', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const phone = String(req.body?.phone || '').trim();
-    if (!phone) return res.status(400).json({ error: 'חסר מספר טלפון' });
-
-    const normalized = db.validateMobilePhone(phone);
-    const settings = db.getSettings();
-    const clinic = settings.clinic_name || 'המרפאה';
-    const text = `בדיקת ${clinic} — אם קיבלת הודעה זו, שליחת וואטסאפ תקינה.`;
-
-    const result = await whatsappService.sendWhatsAppText(normalized, text);
-    if (result.ok) return res.json({ success: true, ...result });
-    if (result.skipped) {
-      return res.status(400).json({ success: false, error: `דולג (${result.reason})` });
-    }
-    return res.status(400).json({ success: false, error: result.error || 'שגיאת שליחה' });
-  } catch (e) {
-    res.status(400).json({ success: false, error: e.message });
-  }
-});
-
-app.post('/api/admin/email/test', requireAuth, requireAdmin, async (_, res) => {
-  try {
-    const result = await emailAlert.sendTestEmail(db.getSettings());
-    res.json({ success: true, ...result });
-  } catch (e) {
-    res.status(400).json({ success: false, error: e.message });
-  }
-});
-
 app.post('/api/admin/external-patient/test', requireAuth, requireAdmin, async (_, res) => {
   try {
     const result = await testExternalPatientConnection();
@@ -491,23 +434,12 @@ app.post('/api/admin/backup', requireAuth, requireAdmin, async (_, res) => {
   }
 });
 
-app.put('/api/settings', requireAuth, requireAdmin, async (req, res) => {
-  const wasWhatsAppEnabled = db.getSettings().whatsapp_enabled === '1';
+app.put('/api/settings', requireAuth, requireAdmin, (req, res) => {
   for (const [key, value] of Object.entries(req.body)) {
     if (shouldSkipSecretUpdate(key, value)) continue;
     db.setSetting(key, String(value));
   }
   const settings = db.getSettings();
-  const nowEnabled = settings.whatsapp_enabled === '1';
-  if (nowEnabled && !wasWhatsAppEnabled) {
-    try {
-      await whatsappService.startWhatsApp();
-    } catch (e) {
-      console.warn('WhatsApp start after settings:', e.message);
-    }
-  } else if (!nowEnabled && wasWhatsAppEnabled) {
-    await whatsappService.stopWhatsApp();
-  }
   broadcast('settings:updated', maskSettings(settings));
   res.json(maskSettings(settings));
 });
@@ -799,6 +731,4 @@ httpServer.listen(PORT, async () => {
   } catch (e) {
     console.warn('גיבוי אוטומטי:', e.message);
   }
-  whatsappService.installWhatsAppCrashGuard();
-  whatsappService.bootstrapWhatsApp().catch((e) => console.warn('WhatsApp:', e.message));
 });

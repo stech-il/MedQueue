@@ -3446,51 +3446,6 @@ textarea {
   font-size: 0.88rem;
 }
 
-.settings-wa-status {
-  margin: 1rem 0 0.5rem;
-  padding: 0.65rem 0.85rem;
-  border-radius: 10px;
-  font-size: 0.92rem;
-  border: 1px solid #334155;
-  background: #0f172a;
-}
-
-.settings-wa-status--ready {
-  border-color: #22c55e;
-  background: rgba(34, 197, 94, 0.12);
-  color: #86efac;
-}
-
-.settings-wa-status--qr,
-.settings-wa-status--authenticated,
-.settings-wa-status--loading,
-.settings-wa-status--reconnecting,
-.settings-wa-status--initializing {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.12);
-  color: #fcd34d;
-}
-
-.settings-wa-status--disconnected,
-.settings-wa-status--error {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
-}
-
-.settings-wa-qr {
-  margin: 1rem 0;
-  text-align: center;
-}
-
-.settings-wa-qr img {
-  display: inline-block;
-  padding: 0.75rem;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-}
-
 .settings-grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

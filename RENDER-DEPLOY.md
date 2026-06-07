@@ -44,16 +44,6 @@ set MEDQUEUE_URL=https://YOUR-APP.onrender.com
 npm run kiosk:agent
 ```
 
-## וואטסאפ + התראות Gmail
-
-ניהול → הגדרות → **וואטסאפ**: סריקת QR (סשן נשמר ב־`/var/data/whatsapp-auth`), הודעות אוטומטיות בקיוסק ובקריאה לחדר.  
-התראת מייל כשהחיבור נופל — הגדר Gmail + **סיסמת אפליקציה** (לא סיסמה רגילה).
-
-- דורש **דיסק קבוע** (כבר מוגדר ב־`render.yaml`)
-- מומלץ **Standard** (512MB לעיתים לא מספיק ל-Chrome+וואטסאפ; Starter עלול לקרוס עם Target closed)
-- ב-Linux (Render) משתמש ב־`@sparticuz/chromium`; ב-build רץ `install:chrome` לגיבוי
-- אחרי deploy או «שינה» של השירות — ייתכן שיידרש לסרוק QR שוב
-
 ## הערות
 
 - **תוכנית חינמית:** השירות «נרדם» אחרי חוסר פעילות — טעינה ראשונה איטית.  
