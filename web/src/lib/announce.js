@@ -4,12 +4,14 @@ import { api } from '../api';
 import { getRoomAnnounceText } from './roomDisplay.js';
 
 let voicesReady = null;
-let announcing = false;
 let cachedSettings = null;
 let sharedAudioCtx = null;
 let playbackUnlocked = false;
 let persistentAudio = null;
-const speakQueue = [];
+let queueDraining = false;
+
+/** תור הקראות — כל קריאה ממתינה לסיום הקודמת */
+const speakJobs = [];
 
 async function getAudioContext() {
   const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -178,18 +180,40 @@ export async function unlockAudioPlayback() {
     }
   }
 
-  if (playbackUnlocked && speakQueue.length) {
-    const pending = speakQueue.splice(0);
-    for (const fn of pending) {
-      try {
-        await fn();
-      } catch {
-        /* ignore */
-      }
-    }
+  if (playbackUnlocked) {
+    drainSpeakQueue().catch(() => {});
   }
 
   return playbackUnlocked;
+}
+
+async function drainSpeakQueue() {
+  if (queueDraining) return;
+  queueDraining = true;
+
+  while (speakJobs.length > 0) {
+    if (!playbackUnlocked) {
+      await unlockAudioPlayback();
+      if (!playbackUnlocked) break;
+    }
+
+    const job = speakJobs.shift();
+    try {
+      if (job.chime) {
+        try {
+          await playDoctorSummonChime();
+        } catch (e) {
+          console.warn('doctor summon chime:', e);
+        }
+      }
+      await runSpeak(job.text);
+      job.resolve();
+    } catch (e) {
+      job.reject(e);
+    }
+  }
+
+  queueDraining = false;
 }
 
 export function preloadVoices() {
@@ -281,12 +305,15 @@ export function buildDoctorSummonText(room) {
 
 export async function announceDoctorSummon(room, options = {}) {
   if (!room) return;
-  try {
-    await playDoctorSummonChime();
-  } catch (e) {
-    console.warn('doctor summon chime:', e);
-  }
-  await speakText(buildDoctorSummonText(room), options);
+  const settings = getSettings();
+  const playback = settings.tts_playback || 'both';
+  if (playback === 'server' && !options.forDisplay) return;
+
+  const text = buildDoctorSummonText(room);
+  return new Promise((resolve, reject) => {
+    speakJobs.push({ text, chime: true, resolve, reject });
+    drainSpeakQueue().catch(reject);
+  });
 }
 
 export async function announceTicketClear(ticket, room, options = {}) {
@@ -297,37 +324,22 @@ export async function announceTicketClear(ticket, room, options = {}) {
 async function runSpeak(text) {
   if (!text?.trim()) return;
 
-  if (announcing) {
-    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
-    await delay(150);
-  }
-  announcing = true;
-
-  if (typeof speechSynthesis !== 'undefined') {
-    speechSynthesis.cancel();
-    await delay(80);
-  }
-
   const settings = getSettings();
   const provider = settings.tts_provider || 'edge';
 
-  try {
-    if (provider === 'edge' || provider === 'gemini') {
-      try {
-        await speakServerTts(text);
-        return;
-      } catch (e) {
-        console.warn('Server TTS failed, fallback to browser:', e);
-      }
+  if (provider === 'edge' || provider === 'gemini') {
+    try {
+      await speakServerTts(text);
+      return;
+    } catch (e) {
+      console.warn('Server TTS failed, fallback to browser:', e);
     }
-
-    const voices = await preloadVoices();
-    const voice = pickHebrewVoice(voices, settings.tts_voice_uri || '');
-    const rate = Number(settings.tts_rate) || 0.68;
-    await speakBrowser(text, voice, rate);
-  } finally {
-    announcing = false;
   }
+
+  const voices = await preloadVoices();
+  const voice = pickHebrewVoice(voices, settings.tts_voice_uri || '');
+  const rate = Number(settings.tts_rate) || 0.68;
+  await speakBrowser(text, voice, rate);
 }
 
 export async function speakText(text, options = {}) {
@@ -337,20 +349,12 @@ export async function speakText(text, options = {}) {
   const playback = settings.tts_playback || 'both';
   if (playback === 'server' && !options.forDisplay) return;
 
-  if (!playbackUnlocked) {
-    await unlockAudioPlayback();
-  }
+  const trimmed = text.trim();
 
-  if (!playbackUnlocked) {
-    return new Promise((resolve) => {
-      speakQueue.push(async () => {
-        await runSpeak(text);
-        resolve();
-      });
-    });
-  }
-
-  return runSpeak(text);
+  return new Promise((resolve, reject) => {
+    speakJobs.push({ text: trimmed, resolve, reject });
+    drainSpeakQueue().catch(reject);
+  });
 }
 
 export function hasHebrewVoice() {
