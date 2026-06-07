@@ -14,6 +14,8 @@ services:
         value: production
       - key: DATA_DIR
         value: /var/data
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/project/src/server/.puppeteer-cache
       - key: JWT_SECRET
         generateValue: true
     disk:

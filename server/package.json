@@ -7,9 +7,11 @@
   },
   "scripts": {
     "dev": "node --experimental-sqlite --watch index.js",
-    "start": "node --experimental-sqlite index.js"
+    "start": "node --experimental-sqlite index.js",
+    "install:chrome": "puppeteer browsers install chrome"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^133.0.0",
     "bidi-js": "^1.0.3",
     "cors": "^2.8.5",
     "express": "^4.21.2",

@@ -51,6 +51,7 @@ npm run kiosk:agent
 
 - דורש **דיסק קבוע** (כבר מוגדר ב־`render.yaml`)
 - מומלץ **Starter** ומעלה (Chrome + וואטסאפ צורכים זיכרון)
+- ב-Linux (Render) משתמש ב־`@sparticuz/chromium`; ב-build רץ `install:chrome` לגיבוי
 - אחרי deploy או «שינה» של השירות — ייתכן שיידרש לסרוק QR שוב
 
 ## הערות

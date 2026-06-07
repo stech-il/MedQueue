@@ -1,8 +1,9 @@
 import { join } from 'path';
 import { mkdirSync } from 'fs';
 import QRCode from 'qrcode';
+import './puppeteerEnv.js';
 import wweb from 'whatsapp-web.js';
-import { resolveChromiumExecutable } from './resolveChromium.js';
+import { getPuppeteerLaunchOptions } from './resolveChromium.js';
 import * as db from './db.js';
 import { DATA_DIR } from './paths.js';
 import { sendWhatsAppDisconnectAlert } from './emailAlert.js';
@@ -125,15 +126,11 @@ export async function startWhatsApp() {
     await destroyClient();
     setStatus('initializing');
 
-    const executablePath = await resolveChromiumExecutable();
+    const puppeteerOpts = await getPuppeteerLaunchOptions();
 
     const c = new Client({
       authStrategy: new LocalAuth({ dataPath: AUTH_PATH }),
-      puppeteer: {
-        headless: true,
-        executablePath,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      },
+      puppeteer: puppeteerOpts,
     });
 
     attachClientEvents(c);

@@ -2,6 +2,7 @@ node_modules/
 dist/
 web/dist/
 server/data/
+server/.puppeteer-cache/
 server/uploads/
 server/backups/
 *.db
