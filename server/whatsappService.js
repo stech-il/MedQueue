@@ -29,15 +29,20 @@ let readyAt = null;
 const HEALTH_MS = 5 * 60 * 1000;
 let healthTimer = null;
 
+const OK_STATUSES = new Set(['ready', 'authenticated', 'qr', 'initializing', 'loading']);
+
 function setStatus(next, err = '') {
   status = next;
   lastError = err || '';
   db.setSetting('whatsapp_status', next);
-  if (err) db.setSetting('whatsapp_last_error', err.slice(0, 500));
+  if (err) {
+    db.setSetting('whatsapp_last_error', err.slice(0, 500));
+  } else if (OK_STATUSES.has(next)) {
+    db.setSetting('whatsapp_last_error', '');
+  }
   if (next === 'ready') {
     readyAt = new Date().toISOString();
     db.setSetting('whatsapp_last_connected_at', readyAt);
-    db.setSetting('whatsapp_last_error', '');
   }
 }
 
@@ -78,6 +83,12 @@ function attachClientEvents(c) {
     lastQr = null;
     lastQrDataUrl = null;
     setStatus('authenticated');
+    console.log('WhatsApp: מאומת — טוען…');
+  });
+
+  c.on('loading_screen', (pct, message) => {
+    setStatus('loading');
+    if (message) console.log('WhatsApp loading:', pct, message);
   });
 
   c.on('ready', () => {

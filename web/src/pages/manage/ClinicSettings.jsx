@@ -32,7 +32,8 @@ const TABS = [
 const WA_STATUS_LABELS = {
   ready: 'מחובר',
   qr: 'ממתין לסריקת QR',
-  authenticated: 'מאומת — מתחבר…',
+  authenticated: 'מאומת — טוען וואטסאפ…',
+  loading: 'טוען…',
   initializing: 'מתחיל…',
   disconnected: 'מנותק',
   error: 'שגיאה',
@@ -236,7 +237,14 @@ export default function ClinicSettings() {
     try {
       const st = await api.getWhatsAppStatus();
       setWaStatus(st);
-      if (st?.status) setForm((f) => ({ ...f, whatsapp_status: st.status }));
+      if (st?.status) {
+        setForm((f) => ({
+          ...f,
+          whatsapp_status: st.status,
+          whatsapp_last_error: st.lastError || '',
+          ...(st.readyAt ? { whatsapp_last_connected_at: st.readyAt } : {}),
+        }));
+      }
     } catch {
       /* ignore */
     }
@@ -577,9 +585,21 @@ export default function ClinicSettings() {
                 )}
               </div>
 
-              {(waStatus?.lastError || form.whatsapp_last_error) && (
-                <p className="settings-hint" style={{ color: '#f87171' }}>
-                  {waStatus?.lastError || form.whatsapp_last_error}
+              {(() => {
+                const waStat = waStatus?.status || form.whatsapp_status;
+                const err =
+                  waStatus?.lastError ||
+                  (['error', 'disconnected'].includes(waStat) ? form.whatsapp_last_error : '');
+                return err ? (
+                  <p className="settings-hint" style={{ color: '#f87171' }}>
+                    {err}
+                  </p>
+                ) : null;
+              })()}
+
+              {(waStatus?.status || form.whatsapp_status) === 'authenticated' && (
+                <p className="settings-hint">
+                  הסריקה הצליחה. ממתין לטעינה (עד דקה) — אם נשאר כך, רענן את הדף או לחץ שוב «התחבר».
                 </p>
               )}
 
