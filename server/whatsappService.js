@@ -29,7 +29,15 @@ let readyAt = null;
 const HEALTH_MS = 5 * 60 * 1000;
 let healthTimer = null;
 
-const OK_STATUSES = new Set(['ready', 'authenticated', 'qr', 'initializing', 'loading']);
+const OK_STATUSES = new Set(['ready', 'authenticated', 'qr', 'initializing', 'loading', 'reconnecting']);
+
+function isPageOpen(c) {
+  try {
+    return Boolean(c?.pupPage && typeof c.pupPage.isClosed === 'function' && !c.pupPage.isClosed());
+  } catch {
+    return false;
+  }
+}
 
 function setStatus(next, err = '') {
   status = next;
@@ -46,13 +54,20 @@ function setStatus(next, err = '') {
   }
 }
 
+function effectiveStatus() {
+  if (initPromise && status !== 'qr' && status !== 'ready') return 'reconnecting';
+  if (status === 'ready' && !client) return 'reconnecting';
+  return status;
+}
+
 export function getWhatsAppStatus() {
   return {
-    status,
+    status: effectiveStatus(),
     qr: lastQr,
     qrDataUrl: lastQrDataUrl,
     lastError,
     readyAt,
+    clientAlive: Boolean(client),
     enabled: db.getSettings().whatsapp_enabled === '1',
   };
 }
@@ -127,7 +142,10 @@ export async function startWhatsApp() {
     return getWhatsAppStatus();
   }
 
-  if (client && (status === 'ready' || status === 'qr' || status === 'authenticated')) {
+  if (
+    isPageOpen(client) &&
+    (status === 'ready' || status === 'qr' || status === 'authenticated' || status === 'loading')
+  ) {
     return getWhatsAppStatus();
   }
 
@@ -205,18 +223,56 @@ function recordSendResult(result, errMsg = '') {
   db.setSetting('whatsapp_last_send_error', String(msg).slice(0, 500));
 }
 
-async function isClientReady() {
-  if (!client || status !== 'ready') return false;
-  try {
-    const st = await client.getState();
-    if (st && !['CONNECTED', 'OPENING'].includes(st)) {
-      console.warn('WhatsApp getState:', st);
-      return false;
-    }
-  } catch {
-    /* מאירוע ready — ממשיכים לנסות שליחה */
+function waitForReady(timeoutMs = 120000) {
+  if (status === 'ready' && client) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    const timer = setInterval(() => {
+      if (status === 'ready' && client) {
+        clearInterval(timer);
+        resolve();
+        return;
+      }
+      if (status === 'error' || status === 'disconnected') {
+        clearInterval(timer);
+        reject(new Error(lastError || `וואטסאפ ${status}`));
+        return;
+      }
+      if (Date.now() - started > timeoutMs) {
+        clearInterval(timer);
+        reject(new Error('פג זמן המתנה לחיבור וואטסאפ — נסה «התחבר» שוב'));
+      }
+    }, 400);
+  });
+}
+
+/** לפני שליחה — מוודא client חי; אם לא, מתחבר מחדש מהסשן השמור */
+async function ensureReadyForSend() {
+  const settings = db.getSettings();
+  if (settings.whatsapp_enabled !== '1') return false;
+
+  if (isPageOpen(client) && status === 'ready') return true;
+
+  if (status === 'ready' && !client) {
+    console.log('WhatsApp: סשן שמור בלי client — מתחבר מחדש…');
+    setStatus('reconnecting');
   }
-  return true;
+
+  try {
+    if (initPromise) {
+      await initPromise;
+    } else {
+      await startWhatsApp();
+    }
+    if (status !== 'ready') {
+      await waitForReady(120000);
+    }
+    return Boolean(client) && status === 'ready';
+  } catch (e) {
+    console.warn('ensureReadyForSend:', e.message);
+    return false;
+  }
 }
 
 /** מזהה צ'אט — getNumberId לפני שליחה למספרים חדשים */
@@ -241,8 +297,11 @@ export async function sendWhatsAppText(phone, text) {
     recordSendResult(r);
     return r;
   }
-  if (!(await isClientReady())) {
-    const r = { skipped: true, reason: 'not_ready' };
+  if (!(await ensureReadyForSend())) {
+    const r = {
+      skipped: true,
+      reason: status === 'qr' ? 'needs_qr' : 'not_ready',
+    };
     recordSendResult(r);
     return r;
   }
@@ -323,12 +382,17 @@ export function startWhatsAppHealthCheck() {
     const settings = db.getSettings();
     if (settings.whatsapp_enabled !== '1') return;
 
-    if (status === 'ready' && !(await isClientReady())) {
-      await handleDisconnect('חיבור אבד (בדיקת תקינות)');
+    const pageOpen = client?.pupPage && !client.pupPage.isClosed?.();
+    if (status === 'ready' && !pageOpen) {
+      console.log('WhatsApp health: מחדש חיבור…');
       try {
+        client = null;
+        initPromise = null;
         await startWhatsApp();
+        await waitForReady(90000);
       } catch (e) {
         console.warn('WhatsApp reconnect:', e.message);
+        setStatus('disconnected', e.message);
       }
       return;
     }
@@ -346,7 +410,10 @@ export function startWhatsAppHealthCheck() {
 export async function bootstrapWhatsApp() {
   const settings = db.getSettings();
   const saved = settings.whatsapp_status;
-  if (saved && saved !== 'disabled') status = saved;
+  // לא מציגים «מחובר» מה-DB בלי client חי — מונע not_ready שקט
+  if (saved && saved !== 'disabled' && saved !== 'ready') {
+    status = saved;
+  }
 
   if (settings.whatsapp_enabled === '1') {
     try {

@@ -3464,6 +3464,7 @@ textarea {
 .settings-wa-status--qr,
 .settings-wa-status--authenticated,
 .settings-wa-status--loading,
+.settings-wa-status--reconnecting,
 .settings-wa-status--initializing {
   border-color: #f59e0b;
   background: rgba(245, 158, 11, 0.12);

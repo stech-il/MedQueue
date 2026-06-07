@@ -34,6 +34,7 @@ const WA_STATUS_LABELS = {
   qr: 'ממתין לסריקת QR',
   authenticated: 'מאומת — טוען וואטסאפ…',
   loading: 'טוען…',
+  reconnecting: 'מתחבר מחדש…',
   initializing: 'מתחיל…',
   disconnected: 'מנותק',
   error: 'שגיאה',
