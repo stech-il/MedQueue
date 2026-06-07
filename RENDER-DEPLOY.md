@@ -50,7 +50,7 @@ npm run kiosk:agent
 התראת מייל כשהחיבור נופל — הגדר Gmail + **סיסמת אפליקציה** (לא סיסמה רגילה).
 
 - דורש **דיסק קבוע** (כבר מוגדר ב־`render.yaml`)
-- מומלץ **Starter** ומעלה (Chrome + וואטסאפ צורכים זיכרון)
+- מומלץ **Standard** (512MB לעיתים לא מספיק ל-Chrome+וואטסאפ; Starter עלול לקרוס עם Target closed)
 - ב-Linux (Render) משתמש ב־`@sparticuz/chromium`; ב-build רץ `install:chrome` לגיבוי
 - אחרי deploy או «שינה» של השירות — ייתכן שיידרש לסרוק QR שוב
 

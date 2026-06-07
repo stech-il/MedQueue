@@ -13,6 +13,7 @@ export function ensureDataDirs() {
   mkdirSync(join(DATA_DIR, 'uploads'), { recursive: true });
   mkdirSync(join(DATA_DIR, 'uploads', 'display'), { recursive: true });
   mkdirSync(join(DATA_DIR, 'whatsapp-auth'), { recursive: true });
+  mkdirSync(join(DATA_DIR, 'whatsapp-chrome'), { recursive: true });
 }
 
 export const DB_PATH = join(DATA_DIR, 'medqueue.db');

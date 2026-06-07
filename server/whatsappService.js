@@ -16,7 +16,12 @@ import {
 const { Client, LocalAuth } = wweb;
 
 const AUTH_PATH = join(DATA_DIR, 'whatsapp-auth');
+const CHROME_PROFILE = join(DATA_DIR, 'whatsapp-chrome');
 mkdirSync(AUTH_PATH, { recursive: true });
+mkdirSync(CHROME_PROFILE, { recursive: true });
+
+const WA_WEB_CACHE =
+  'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html';
 
 let client = null;
 let initPromise = null;
@@ -83,6 +88,30 @@ async function handleDisconnect(reason) {
   }
 }
 
+function handleBrowserCrash(reason) {
+  console.error('WhatsApp browser crash:', reason);
+  client = null;
+  initPromise = null;
+  setStatus('disconnected', 'דפדפן וואטסאפ נסגר בשרת — לחץ «התחבר» שוב');
+}
+
+function attachBrowserGuards(c) {
+  try {
+    c.pupBrowser?.on('disconnected', () => handleBrowserCrash('browser disconnected'));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** מונע מקריסת Chrome להפיל את כל השרת */
+export function installWhatsAppCrashGuard() {
+  process.on('unhandledRejection', (reason) => {
+    const msg = String(reason?.message || reason || '');
+    if (!/Target closed|Protocol error|Execution context was destroyed/i.test(msg)) return;
+    handleBrowserCrash(msg);
+  });
+}
+
 function attachClientEvents(c) {
   c.on('qr', async (qr) => {
     lastQr = qr;
@@ -98,6 +127,7 @@ function attachClientEvents(c) {
     lastQr = null;
     lastQrDataUrl = null;
     setStatus('authenticated');
+    attachBrowserGuards(c);
     console.log('WhatsApp: מאומת — טוען…');
   });
 
@@ -159,7 +189,11 @@ export async function startWhatsApp() {
 
     const c = new Client({
       authStrategy: new LocalAuth({ dataPath: AUTH_PATH }),
-      puppeteer: puppeteerOpts,
+      webVersionCache: { type: 'remote', remotePath: WA_WEB_CACHE },
+      puppeteer: {
+        ...puppeteerOpts,
+        userDataDir: CHROME_PROFILE,
+      },
     });
 
     attachClientEvents(c);
@@ -167,15 +201,19 @@ export async function startWhatsApp() {
 
     try {
       await c.initialize();
+      attachBrowserGuards(c);
     } catch (e) {
-      setStatus('error', e.message);
-      client = null;
-      initPromise = null;
-      throw e;
+      const msg = String(e?.message || e).slice(0, 500);
+      setStatus('error', msg);
+      await destroyClient();
+      throw new Error(msg);
     }
 
     return getWhatsAppStatus();
-  })();
+  })().catch((e) => {
+    initPromise = null;
+    throw e;
+  });
 
   try {
     return await initPromise;
@@ -382,8 +420,7 @@ export function startWhatsAppHealthCheck() {
     const settings = db.getSettings();
     if (settings.whatsapp_enabled !== '1') return;
 
-    const pageOpen = client?.pupPage && !client.pupPage.isClosed?.();
-    if (status === 'ready' && !pageOpen) {
+    if (status === 'ready' && !isPageOpen(client)) {
       console.log('WhatsApp health: מחדש חיבור…');
       try {
         client = null;
@@ -416,16 +453,13 @@ export async function bootstrapWhatsApp() {
   }
 
   if (settings.whatsapp_enabled === '1') {
-    try {
-      await startWhatsApp();
-    } catch (e) {
-      console.warn('WhatsApp bootstrap:', e.message);
-      try {
-        await sendWhatsAppDisconnectAlert(db.getSettings(), e.message);
-      } catch {
-        /* ignore */
-      }
-    }
+    // דחייה קלה — השרת עולה קודם, Chrome אחר כך (פחות עומס ב-startup)
+    setTimeout(() => {
+      startWhatsApp().catch((e) => {
+        console.warn('WhatsApp bootstrap:', e.message);
+        sendWhatsAppDisconnectAlert(db.getSettings(), e.message).catch(() => {});
+      });
+    }, 8000);
   }
   startWhatsAppHealthCheck();
 }

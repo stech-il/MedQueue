@@ -2,34 +2,77 @@ import './puppeteerEnv.js';
 import { existsSync } from 'fs';
 import { findChromiumExecutable } from './findChromium.js';
 
-const LINUX_ARGS = ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'];
+/** Render / Linux — Chrome עם זיכרון מצומצם */
+const RENDER_CHROME_ARGS = [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-gpu',
+  '--disable-software-rasterizer',
+  '--disable-extensions',
+  '--disable-background-networking',
+  '--disable-default-apps',
+  '--disable-sync',
+  '--no-first-run',
+  '--no-zygote',
+  '--single-process',
+  '--memory-pressure-off',
+];
 
-function useLinuxBundle() {
-  if (process.platform !== 'linux') return false;
+const DESKTOP_CHROME_ARGS = [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+];
+
+function isRenderLinux() {
   return (
-    process.env.NODE_ENV === 'production' ||
-    process.env.RENDER === 'true' ||
-    process.env.USE_SPARTICUZ_CHROMIUM === '1'
+    process.platform === 'linux' &&
+    (process.env.RENDER === 'true' || process.env.NODE_ENV === 'production')
   );
+}
+
+function buildOpts(executablePath, { forRender = false } = {}) {
+  return {
+    headless: true,
+    executablePath,
+    args: forRender ? RENDER_CHROME_ARGS : DESKTOP_CHROME_ARGS,
+    defaultViewport: { width: 1024, height: 768 },
+    ignoreHTTPSErrors: true,
+  };
 }
 
 /** אפשרויות Puppeteer ל־whatsapp-web.js */
 export async function getPuppeteerLaunchOptions() {
   const envPath = process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
   if (envPath && existsSync(envPath)) {
-    return { headless: true, executablePath: envPath, args: LINUX_ARGS };
+    return buildOpts(envPath, { forRender: isRenderLinux() });
   }
 
-  if (useLinuxBundle()) {
+  // Render: קודם Chrome מ-puppeteer (מותקן ב-build), לא sparticuz
+  const puppeteer = await import('puppeteer');
+  try {
+    const executablePath = await puppeteer.default.executablePath();
+    if (executablePath && existsSync(executablePath)) {
+      console.log('WhatsApp Chrome:', executablePath);
+      return buildOpts(executablePath, { forRender: isRenderLinux() });
+    }
+  } catch (e) {
+    console.warn('puppeteer.executablePath:', e.message);
+  }
+
+  if (isRenderLinux()) {
     try {
       const chromium = (await import('@sparticuz/chromium')).default;
       chromium.setGraphicsMode = false;
       const executablePath = await chromium.executablePath();
       if (executablePath && existsSync(executablePath)) {
+        console.log('WhatsApp Chrome (sparticuz):', executablePath);
         return {
-          headless: chromium.headless ?? true,
+          headless: true,
           executablePath,
-          args: [...(chromium.args || []), ...LINUX_ARGS],
+          args: [...(chromium.args || []), ...RENDER_CHROME_ARGS],
+          defaultViewport: { width: 1024, height: 768 },
         };
       }
     } catch (e) {
@@ -37,19 +80,13 @@ export async function getPuppeteerLaunchOptions() {
     }
   }
 
-  const puppeteer = await import('puppeteer');
-  const executablePath = await puppeteer.default.executablePath();
-  if (executablePath && existsSync(executablePath)) {
-    return { headless: true, executablePath, args: LINUX_ARGS };
-  }
-
   const local = findChromiumExecutable();
   if (local && existsSync(local)) {
-    return { headless: true, executablePath: local, args: LINUX_ARGS };
+    return buildOpts(local);
   }
 
   throw new Error(
-    'Chrome לא נמצא בשרת. ב-Render: deploy מחדש אחרי עדכון. מקומית: npm run install:chrome --prefix server'
+    'Chrome לא נמצא בשרת. הרץ deploy מחדש (install:chrome). או הגדר PUPPETEER_EXECUTABLE_PATH'
   );
 }
 

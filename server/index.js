@@ -799,5 +799,6 @@ httpServer.listen(PORT, async () => {
   } catch (e) {
     console.warn('גיבוי אוטומטי:', e.message);
   }
+  whatsappService.installWhatsAppCrashGuard();
   whatsappService.bootstrapWhatsApp().catch((e) => console.warn('WhatsApp:', e.message));
 });
