@@ -263,7 +263,7 @@ function speakBrowser(text, voice, rate) {
   });
 }
 
-async function speakEdge(text) {
+async function speakServerTts(text) {
   const blob = await api.speakTts(text);
   await playMp3Blob(blob);
 }
@@ -312,12 +312,12 @@ async function runSpeak(text) {
   const provider = settings.tts_provider || 'edge';
 
   try {
-    if (provider === 'edge') {
+    if (provider === 'edge' || provider === 'gemini') {
       try {
-        await speakEdge(text);
+        await speakServerTts(text);
         return;
       } catch (e) {
-        console.warn('Edge TTS failed, fallback to browser:', e);
+        console.warn('Server TTS failed, fallback to browser:', e);
       }
     }
 
@@ -355,7 +355,8 @@ export async function speakText(text, options = {}) {
 
 export function hasHebrewVoice() {
   const settings = getSettings();
-  if ((settings.tts_provider || 'edge') === 'edge') return true;
+  const p = settings.tts_provider || 'edge';
+  if (p === 'edge' || p === 'gemini') return true;
   if (typeof speechSynthesis === 'undefined') return false;
   return speechSynthesis.getVoices().some((v) => v.lang?.startsWith('he'));
 }

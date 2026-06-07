@@ -81,7 +81,13 @@ export default function SystemStatus() {
         <StatusRow
           label="הקראה"
           ok
-          detail={`${data.tts_playback === 'server' ? 'מהשרת' : 'בדפדפן'} · ${data.tts_provider === 'edge' ? 'Microsoft Neural' : 'דפדפן'}`}
+          detail={`${data.tts_playback === 'server' ? 'מהשרת' : 'בדפדפן'} · ${
+            data.tts_provider === 'gemini'
+              ? 'Gemini'
+              : data.tts_provider === 'edge'
+                ? 'Microsoft Neural'
+                : 'דפדפן'
+          }`}
         />
         <StatusRow label="קריאה אחרונה היום" ok={Boolean(data.last_called_at)} detail={formatDt(data.last_called_at)} />
       </div>

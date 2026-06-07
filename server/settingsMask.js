@@ -1,6 +1,6 @@
 /** הגדרות ציבוריות — מסתיר סיסמאות ומפתחות */
 
-const SECRET_KEYS = new Set(['external_patient_update_api_key']);
+const SECRET_KEYS = new Set(['external_patient_update_api_key', 'tts_gemini_api_key']);
 
 export const MASKED_SECRET = '********';
 

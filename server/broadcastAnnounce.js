@@ -34,14 +34,19 @@ export function doctorSummonPayload(room, settings) {
   };
 }
 
+function usesServerTts(settings) {
+  const p = settings?.tts_provider || 'edge';
+  return p === 'edge' || p === 'gemini';
+}
+
 export function playServerTicketCall(ticket, room, settings) {
   if (!shouldPlayServerAudio(settings)) return;
-  if ((settings.tts_provider || 'edge') !== 'edge') return;
+  if (!usesServerTts(settings)) return;
   localAnnounce.announceTicketCall(ticket, room, settings);
 }
 
 export function playServerDoctorSummon(room, settings) {
   if (!shouldPlayServerAudio(settings)) return;
-  if ((settings.tts_provider || 'edge') !== 'edge') return;
+  if (!usesServerTts(settings)) return;
   localAnnounce.announceDoctorSummon(room, settings);
 }

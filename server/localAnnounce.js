@@ -19,8 +19,8 @@ async function drain() {
   const { text, settings, chime } = queue.shift();
   try {
     if (chime) await playSummonChime();
-    const audio = await tts.synthesizeEdge(text, settings);
-    await playMp3Buffer(audio);
+    const { buffer, ext } = await tts.synthesizeSpeech(text, settings);
+    await playAudioBuffer(buffer, ext);
   } catch (e) {
     console.warn('localAnnounce:', e.message || e);
   } finally {
@@ -51,8 +51,8 @@ async function playSummonChime() {
   /* צליל דינג-דונג נשאר במסך תצוגה (Web Audio); בשרת רק ההקראה */
 }
 
-function playMp3Buffer(buffer) {
-  const path = join(tmpdir(), `medqueue-${Date.now()}.mp3`);
+function playAudioBuffer(buffer, ext = 'mp3') {
+  const path = join(tmpdir(), `medqueue-${Date.now()}.${ext}`);
   return writeFile(path, buffer)
     .then(() => playFile(path))
     .finally(() => {

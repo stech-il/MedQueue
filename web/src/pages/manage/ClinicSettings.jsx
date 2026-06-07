@@ -63,7 +63,8 @@ const TTS_PLAYBACK = [
 ];
 
 const TTS_PROVIDER = [
-  { value: 'edge', title: 'Microsoft Neural', desc: 'קול עברי מקצועי (מומלץ)' },
+  { value: 'edge', title: 'Microsoft Neural', desc: 'חינמי, יציב — הילה / אברי' },
+  { value: 'gemini', title: 'Google Gemini', desc: 'חינמי (מפתח API), ביטויי ויפה יותר' },
   { value: 'browser', title: 'קול הדפדפן', desc: 'קול מותקן במחשב' },
 ];
 
@@ -78,6 +79,10 @@ const EMPTY_FORM = {
   tts_provider: 'edge',
   tts_edge_voice: 'he-IL-HilaNeural',
   tts_edge_rate: '-5%',
+  tts_gemini_api_key: '',
+  tts_gemini_voice: 'Kore',
+  tts_gemini_model: 'gemini-2.5-flash-preview-tts',
+  tts_gemini_style: 'הקרא בבירור ובנימוס בעברית ישראלית:',
   tts_voice_uri: '',
   tts_rate: '0.68',
   display_flash_seconds: '12',
@@ -127,6 +132,8 @@ export default function ClinicSettings() {
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('ok');
   const [edgeVoices, setEdgeVoices] = useState([]);
+  const [geminiVoices, setGeminiVoices] = useState([]);
+  const [geminiModels, setGeminiModels] = useState([]);
   const [browserVoices, setBrowserVoices] = useState([]);
   const [testing, setTesting] = useState(false);
   const [testingExternal, setTestingExternal] = useState(false);
@@ -152,6 +159,10 @@ export default function ClinicSettings() {
         tts_provider: s.tts_provider || 'edge',
         tts_edge_voice: s.tts_edge_voice || 'he-IL-HilaNeural',
         tts_edge_rate: s.tts_edge_rate || '-5%',
+        tts_gemini_api_key: s.tts_gemini_api_key || '',
+        tts_gemini_voice: s.tts_gemini_voice || 'Kore',
+        tts_gemini_model: s.tts_gemini_model || 'gemini-2.5-flash-preview-tts',
+        tts_gemini_style: s.tts_gemini_style || 'הקרא בבירור ובנימוס בעברית ישראלית:',
         tts_voice_uri: s.tts_voice_uri || '',
         tts_rate: s.tts_rate || '0.68',
         display_flash_seconds: s.display_flash_seconds || '12',
@@ -178,7 +189,11 @@ export default function ClinicSettings() {
       });
       setAnnounceSettings(s);
     });
-    api.getTtsVoices().then((v) => setEdgeVoices(v.edge || [])).catch(() => {});
+    api.getTtsVoices().then((v) => {
+      setEdgeVoices(v.edge || []);
+      setGeminiVoices(v.gemini || []);
+      setGeminiModels(v.geminiModels || []);
+    }).catch(() => {});
     preloadVoices().then(() => setBrowserVoices(listBrowserHebrewVoices()));
   }, []);
 
@@ -197,8 +212,9 @@ export default function ClinicSettings() {
 
   const testTts = async () => {
     setTesting(true);
-    setAnnounceSettings(form);
     try {
+      await api.updateSettings(form);
+      setAnnounceSettings(form);
       await speakText('בדיקת הקראה. רופא, נא לגשת לחדר מספר אחת');
       notify('הושמעה בדיקת הקראה');
     } catch (e) {
@@ -650,6 +666,78 @@ export default function ClinicSettings() {
                   </select>
                 </div>
               </div>
+            )}
+
+            {form.tts_provider === 'gemini' && (
+              <>
+                <p className="settings-hint settings-hint--top">
+                  מפתח חינמי:{' '}
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">
+                    aistudio.google.com/apikey
+                  </a>
+                </p>
+                <div className="settings-field">
+                  <label htmlFor="tts_gemini_api_key">מפתח Gemini API</label>
+                  <input
+                    id="tts_gemini_api_key"
+                    type="password"
+                    dir="ltr"
+                    autoComplete="new-password"
+                    value={form.tts_gemini_api_key === '********' ? '' : form.tts_gemini_api_key}
+                    onChange={(e) => setForm({ ...form, tts_gemini_api_key: e.target.value })}
+                    placeholder={
+                      form.tts_gemini_api_key === '********'
+                        ? 'שמור — השאר ריק לשמירה'
+                        : 'AIza...'
+                    }
+                  />
+                </div>
+                <div className="settings-grid-2">
+                  <div className="settings-field">
+                    <label htmlFor="tts_gemini_voice">קול Gemini</label>
+                    <select
+                      id="tts_gemini_voice"
+                      value={form.tts_gemini_voice}
+                      onChange={(e) => setForm({ ...form, tts_gemini_voice: e.target.value })}
+                    >
+                      {(geminiVoices.length
+                        ? geminiVoices
+                        : [{ id: 'Kore', label: 'Kore — ברור ויציב' }]
+                      ).map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.label || v.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="settings-field">
+                    <label htmlFor="tts_gemini_model">מודל</label>
+                    <select
+                      id="tts_gemini_model"
+                      value={form.tts_gemini_model}
+                      onChange={(e) => setForm({ ...form, tts_gemini_model: e.target.value })}
+                    >
+                      {(geminiModels.length
+                        ? geminiModels
+                        : [{ id: 'gemini-2.5-flash-preview-tts', label: 'Flash 2.5' }]
+                      ).map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.label || m.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="settings-field">
+                  <label htmlFor="tts_gemini_style">הנחיית סגנון (אופציונלי)</label>
+                  <input
+                    id="tts_gemini_style"
+                    value={form.tts_gemini_style}
+                    onChange={(e) => setForm({ ...form, tts_gemini_style: e.target.value })}
+                    placeholder="הקרא בבירור ובנימוס בעברית ישראלית:"
+                  />
+                </div>
+              </>
             )}
 
             {form.tts_provider === 'browser' && (

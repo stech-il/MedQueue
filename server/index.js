@@ -102,7 +102,11 @@ app.get('/api/settings', (_, res) => res.json(maskSettings(db.getSettings())));
 
 app.get('/api/tts/voices', async (_, res) => {
   try {
-    res.json({ edge: await ttsService.listHebrewEdgeVoices() });
+    res.json({
+      edge: await ttsService.listHebrewEdgeVoices(),
+      gemini: ttsService.listGeminiVoices(),
+      geminiModels: ttsService.listGeminiModels(),
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -112,14 +116,15 @@ app.post('/api/tts/speak', async (req, res) => {
   const text = String(req.body?.text || '').trim();
   if (!text) return res.status(400).json({ error: 'אין טקסט' });
   const settings = db.getSettings();
-  if ((settings.tts_provider || 'edge') !== 'edge') {
+  const provider = settings.tts_provider || 'edge';
+  if (provider !== 'edge' && provider !== 'gemini') {
     return res.status(400).json({ error: 'מנוע TTS מקצועי לא מופעל בהגדרות' });
   }
   try {
-    const audio = await ttsService.synthesizeEdge(text, settings);
-    res.set('Content-Type', 'audio/mpeg');
+    const { buffer, contentType } = await ttsService.synthesizeSpeech(text, settings);
+    res.set('Content-Type', contentType);
     res.set('Cache-Control', 'no-store');
-    res.send(audio);
+    res.send(buffer);
   } catch (e) {
     console.error('TTS error:', e);
     res.status(500).json({ error: e.message || 'שגיאה בהקראה' });
