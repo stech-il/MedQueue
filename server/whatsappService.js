@@ -16,9 +16,7 @@ import {
 const { Client, LocalAuth } = wweb;
 
 const AUTH_PATH = join(DATA_DIR, 'whatsapp-auth');
-const CHROME_PROFILE = join(DATA_DIR, 'whatsapp-chrome');
 mkdirSync(AUTH_PATH, { recursive: true });
-mkdirSync(CHROME_PROFILE, { recursive: true });
 
 const WA_WEB_CACHE =
   'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html';
@@ -190,10 +188,7 @@ export async function startWhatsApp() {
     const c = new Client({
       authStrategy: new LocalAuth({ dataPath: AUTH_PATH }),
       webVersionCache: { type: 'remote', remotePath: WA_WEB_CACHE },
-      puppeteer: {
-        ...puppeteerOpts,
-        userDataDir: CHROME_PROFILE,
-      },
+      puppeteer: puppeteerOpts,
     });
 
     attachClientEvents(c);
