@@ -427,6 +427,27 @@ app.post('/api/admin/whatsapp/disconnect', requireAuth, requireAdmin, async (_, 
   }
 });
 
+app.post('/api/admin/whatsapp/test-send', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const phone = String(req.body?.phone || '').trim();
+    if (!phone) return res.status(400).json({ error: 'חסר מספר טלפון' });
+
+    const normalized = db.validateMobilePhone(phone);
+    const settings = db.getSettings();
+    const clinic = settings.clinic_name || 'המרפאה';
+    const text = `בדיקת ${clinic} — אם קיבלת הודעה זו, שליחת וואטסאפ תקינה.`;
+
+    const result = await whatsappService.sendWhatsAppText(normalized, text);
+    if (result.ok) return res.json({ success: true, ...result });
+    if (result.skipped) {
+      return res.status(400).json({ success: false, error: `דולג (${result.reason})` });
+    }
+    return res.status(400).json({ success: false, error: result.error || 'שגיאת שליחה' });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
 app.post('/api/admin/email/test', requireAuth, requireAdmin, async (_, res) => {
   try {
     const result = await emailAlert.sendTestEmail(db.getSettings());

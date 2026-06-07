@@ -143,6 +143,11 @@ export const api = {
   connectWhatsApp: () => request('/api/admin/whatsapp/connect', { method: 'POST' }),
   disconnectWhatsApp: () => request('/api/admin/whatsapp/disconnect', { method: 'POST' }),
   testAlertEmail: () => request('/api/admin/email/test', { method: 'POST' }),
+  testWhatsAppSend: (phone) =>
+    request('/api/admin/whatsapp/test-send', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    }),
   getActivityLog: (params = {}) => {
     const q = new URLSearchParams();
     if (params.from) q.set('from', params.from);

@@ -165,6 +165,8 @@ export default function ClinicSettings() {
   const [waStatus, setWaStatus] = useState(null);
   const [waBusy, setWaBusy] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
+  const [testWaPhone, setTestWaPhone] = useState('');
+  const [testingWaSend, setTestingWaSend] = useState(false);
 
   const notify = (text, type = 'ok') => {
     setMsg(text);
@@ -673,6 +675,56 @@ export default function ClinicSettings() {
                   onChange={(e) => setForm({ ...form, whatsapp_call_template: e.target.value })}
                   placeholder="ריק = ברירת מחדל. משתנים: {{clinic}} {{code}} {{dest}} {{room}} {{announce}}"
                 />
+              </div>
+
+              <div className="settings-field" style={{ marginTop: '1rem' }}>
+                <label htmlFor="wa_test_phone">בדיקת שליחה למספר</label>
+                <input
+                  id="wa_test_phone"
+                  type="tel"
+                  dir="ltr"
+                  value={testWaPhone}
+                  onChange={(e) => setTestWaPhone(e.target.value)}
+                  placeholder="0501234567"
+                />
+              </div>
+              <div className="settings-actions-inline">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={testingWaSend || !testWaPhone.trim()}
+                  onClick={async () => {
+                    setTestingWaSend(true);
+                    try {
+                      await api.testWhatsAppSend(testWaPhone.trim());
+                      notify('הודעת בדיקה נשלחה');
+                      const s = await api.getSettings();
+                      setForm((f) => ({
+                        ...f,
+                        whatsapp_last_send_ok: s.whatsapp_last_send_ok,
+                        whatsapp_last_send_at: s.whatsapp_last_send_at,
+                        whatsapp_last_send_error: s.whatsapp_last_send_error || '',
+                      }));
+                    } catch (e) {
+                      notify(e.message, 'err');
+                      try {
+                        const s = await api.getSettings();
+                        setForm((f) => ({
+                          ...f,
+                          whatsapp_last_send_ok: s.whatsapp_last_send_ok,
+                          whatsapp_last_send_at: s.whatsapp_last_send_at,
+                          whatsapp_last_send_error: s.whatsapp_last_send_error || '',
+                        }));
+                      } catch {
+                        /* ignore */
+                      }
+                    } finally {
+                      setTestingWaSend(false);
+                    }
+                  }}
+                >
+                  {testingWaSend ? 'שולח…' : 'שלח הודעת בדיקה'}
+                </button>
               </div>
 
               <div className="settings-hint" style={{ marginTop: '0.75rem' }}>
